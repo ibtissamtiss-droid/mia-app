@@ -4,7 +4,7 @@ import { authConfig } from "@/auth.config";
 
 const { auth } = NextAuth(authConfig);
 
-const AUTH_ONLY_PATHS = ["/login", "/register"];
+const AUTH_ONLY_PATHS = ["/login", "/register", "/forgot-password", "/reset-password"];
 const INFO_PATHS = [
   "/a-propos",
   "/confiance-securite",
