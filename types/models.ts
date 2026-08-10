@@ -72,6 +72,22 @@ export type BillingDocument = {
   items: DocumentItem[];
 };
 
+export type ProspectStatus = "TO_CONTACT" | "CONTACTED" | "IN_DISCUSSION" | "WON" | "LOST";
+
+export type Prospect = {
+  id: string;
+  name: string;
+  company: string | null;
+  email: string | null;
+  phone: string | null;
+  channel: string | null;
+  status: ProspectStatus;
+  notes: string | null;
+  outreachMessage: string | null;
+  createdAt: string;
+  updatedAt: string;
+};
+
 export function documentTotals(doc: Pick<BillingDocument, "items" | "taxRate">) {
   const subtotal = doc.items.reduce((sum, item) => sum + item.quantity * item.unitPrice, 0);
   const tax = subtotal * (doc.taxRate / 100);

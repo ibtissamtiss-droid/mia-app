@@ -36,6 +36,14 @@ enum DocumentStatus {
   CANCELLED
 }
 
+enum ProspectStatus {
+  TO_CONTACT
+  CONTACTED
+  IN_DISCUSSION
+  WON
+  LOST
+}
+
 model User {
   id            String    @id @default(cuid())
   email         String    @unique
@@ -56,6 +64,7 @@ model User {
   actionPlan    ActionPlan?
   forecastEntries ForecastEntry[]
   businessPlan  BusinessPlan?
+  prospects     Prospect[]
 }
 
 model PasswordResetToken {
@@ -216,6 +225,24 @@ model ForecastEntry {
   updatedAt DateTime @updatedAt
 
   @@unique([userId, month])
+  @@index([userId])
+}
+
+model Prospect {
+  id              String         @id @default(cuid())
+  userId          String
+  user            User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name            String
+  company         String?
+  email           String?
+  phone           String?
+  channel         String?
+  status          ProspectStatus @default(TO_CONTACT)
+  notes           String?
+  outreachMessage String?
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
   @@index([userId])
 }
 
