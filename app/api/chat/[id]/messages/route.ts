@@ -25,6 +25,11 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     data: { conversationId: id, role: "USER", content },
   });
 
+  if (conversation.messages.length === 0 && conversation.title === "Nouvelle conversation") {
+    const title = content.length > 48 ? `${content.slice(0, 48)}…` : content;
+    await prisma.chatConversation.update({ where: { id }, data: { title } });
+  }
+
   const history = [...conversation.messages, { role: "USER" as const, content }].map((m) => ({
     role: m.role === "USER" ? ("user" as const) : ("assistant" as const),
     content: m.content,

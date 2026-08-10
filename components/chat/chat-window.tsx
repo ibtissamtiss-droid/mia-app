@@ -6,25 +6,37 @@ import { ChatInput } from "@/components/chat/chat-input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import type { ChatMessage as ChatMessageType } from "@/types/models";
 
-export function ChatWindow() {
-  const [conversationId, setConversationId] = useState<string | null>(null);
+export function ChatWindow({
+  conversationId,
+  onMessageSent,
+}: {
+  conversationId: string;
+  onMessageSent?: () => void;
+}) {
   const [messages, setMessages] = useState<ChatMessageType[]>([]);
+  const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    fetch("/api/chat/conversations", { method: "POST" })
+    let cancelled = false;
+    fetch(`/api/chat/${conversationId}`)
       .then((res) => res.json())
-      .then((data) => setConversationId(data.conversation.id));
-  }, []);
+      .then((data) => {
+        if (cancelled) return;
+        setMessages(data.conversation?.messages ?? []);
+        setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [conversationId]);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
   const send = async (content: string) => {
-    if (!conversationId) return;
-
     const userMessage: ChatMessageType = {
       id: crypto.randomUUID(),
       role: "USER",
@@ -63,24 +75,26 @@ export function ChatWindow() {
     }
 
     setSending(false);
+    onMessageSent?.();
   };
 
   return (
     <div className="flex h-[calc(100vh-8rem)] flex-col rounded-lg border bg-background">
       <ScrollArea className="flex-1 p-4">
         <div className="space-y-3">
-          {messages.length === 0 && (
+          {loading ? (
+            <p className="text-sm text-muted-foreground">Chargement...</p>
+          ) : messages.length === 0 ? (
             <p className="text-sm text-muted-foreground">
               Posez une question à MIA pour commencer.
             </p>
+          ) : (
+            messages.map((m) => <ChatMessage key={m.id} message={m} />)
           )}
-          {messages.map((m) => (
-            <ChatMessage key={m.id} message={m} />
-          ))}
           <div ref={bottomRef} />
         </div>
       </ScrollArea>
-      <ChatInput onSend={send} disabled={sending || !conversationId} />
+      <ChatInput onSend={send} disabled={sending || loading} />
     </div>
   );
 }
