@@ -44,6 +44,12 @@ enum ProspectStatus {
   LOST
 }
 
+enum RecommendationPriority {
+  HIGH
+  MEDIUM
+  LOW
+}
+
 model User {
   id            String    @id @default(cuid())
   email         String    @unique
@@ -65,6 +71,7 @@ model User {
   forecastEntries ForecastEntry[]
   businessPlan  BusinessPlan?
   prospects     Prospect[]
+  recommendations Recommendation[]
 }
 
 model PasswordResetToken {
@@ -242,6 +249,19 @@ model Prospect {
   outreachMessage String?
   createdAt       DateTime       @default(now())
   updatedAt       DateTime       @updatedAt
+
+  @@index([userId])
+}
+
+model Recommendation {
+  id          String                 @id @default(cuid())
+  userId      String
+  user        User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title       String
+  description String
+  priority    RecommendationPriority @default(MEDIUM)
+  done        Boolean                @default(false)
+  createdAt   DateTime               @default(now())
 
   @@index([userId])
 }

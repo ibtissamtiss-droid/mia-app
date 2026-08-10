@@ -16,6 +16,7 @@ import {
   TrendingUp,
   Briefcase,
   Users,
+  Lightbulb,
 } from "lucide-react";
 
 const NAV_ITEMS = [
@@ -29,6 +30,7 @@ const NAV_ITEMS = [
   { href: "/previsionnel", label: "Prévisionnel", icon: TrendingUp },
   { href: "/business-plan", label: "Business plan", icon: Briefcase },
   { href: "/prospects", label: "Recherche de clients", icon: Users },
+  { href: "/recommandations", label: "Recommandations", icon: Lightbulb },
   { href: "/chat", label: "Assistant IA", icon: MessageSquare },
 ];
 

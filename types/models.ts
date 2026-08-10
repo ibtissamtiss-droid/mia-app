@@ -88,6 +88,17 @@ export type Prospect = {
   updatedAt: string;
 };
 
+export type RecommendationPriority = "HIGH" | "MEDIUM" | "LOW";
+
+export type Recommendation = {
+  id: string;
+  title: string;
+  description: string;
+  priority: RecommendationPriority;
+  done: boolean;
+  createdAt: string;
+};
+
 export function documentTotals(doc: Pick<BillingDocument, "items" | "taxRate">) {
   const subtotal = doc.items.reduce((sum, item) => sum + item.quantity * item.unitPrice, 0);
   const tax = subtotal * (doc.taxRate / 100);
