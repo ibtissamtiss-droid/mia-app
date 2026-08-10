@@ -5,7 +5,13 @@ import { authConfig } from "@/auth.config";
 const { auth } = NextAuth(authConfig);
 
 const AUTH_ONLY_PATHS = ["/login", "/register"];
-const INFO_PATHS = ["/a-propos", "/confiance-securite", "/accessibilite"];
+const INFO_PATHS = [
+  "/a-propos",
+  "/confiance-securite",
+  "/accessibilite",
+  "/confidentialite",
+  "/cookies",
+];
 const PUBLIC_PATHS = [...AUTH_ONLY_PATHS, ...INFO_PATHS];
 
 export default auth((req) => {

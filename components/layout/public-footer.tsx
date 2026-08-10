@@ -4,6 +4,8 @@ const LINKS = [
   { href: "/a-propos", label: "À propos" },
   { href: "/confiance-securite", label: "Confiance et sécurité" },
   { href: "/accessibilite", label: "Accessibilité" },
+  { href: "/confidentialite", label: "Confidentialité" },
+  { href: "/cookies", label: "Cookies" },
 ];
 
 export function PublicFooter() {

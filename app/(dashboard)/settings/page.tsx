@@ -2,7 +2,9 @@ import { Suspense } from "react";
 import { GoogleIntegrationCard } from "@/components/settings/google-integration-card";
 import { ProfileForm } from "@/components/settings/profile-form";
 import { ThemeToggle } from "@/components/settings/theme-toggle";
+import { LanguageSelect } from "@/components/settings/language-select";
 import { ExportData } from "@/components/settings/export-data";
+import { DeleteAccount } from "@/components/settings/delete-account";
 
 export default function SettingsPage() {
   return (
@@ -13,10 +15,12 @@ export default function SettingsPage() {
       </div>
       <ProfileForm />
       <ThemeToggle />
+      <LanguageSelect />
       <ExportData />
       <Suspense fallback={null}>
         <GoogleIntegrationCard />
       </Suspense>
+      <DeleteAccount />
     </div>
   );
 }
