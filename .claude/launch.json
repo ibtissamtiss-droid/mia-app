@@ -1,0 +1,14 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "mia-dev",
+      "runtimeExecutable": "/bin/bash",
+      "runtimeArgs": [
+        "-c",
+        "export PATH=\"/Users/amraniidrissi/.nvm/versions/node/v24.19.0/bin:$PATH\" && exec npm run dev"
+      ],
+      "port": 3000
+    }
+  ]
+}
