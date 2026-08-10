@@ -1,5 +1,7 @@
+import { Suspense } from "react";
 import { auth } from "@/auth";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { GoogleIntegrationCard } from "@/components/settings/google-integration-card";
 
 export default async function SettingsPage() {
   const session = await auth();
@@ -25,6 +27,9 @@ export default async function SettingsPage() {
           </p>
         </CardContent>
       </Card>
+      <Suspense fallback={null}>
+        <GoogleIntegrationCard />
+      </Suspense>
     </div>
   );
 }

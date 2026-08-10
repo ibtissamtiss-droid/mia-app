@@ -3,13 +3,14 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { CheckSquare, CalendarDays, NotebookText, MessageSquare, LayoutDashboard, Settings } from "lucide-react";
+import { CheckSquare, CalendarDays, NotebookText, MessageSquare, LayoutDashboard, Settings, Receipt } from "lucide-react";
 
 const NAV_ITEMS = [
   { href: "/dashboard", label: "Tableau de bord", icon: LayoutDashboard },
   { href: "/tasks", label: "Tâches", icon: CheckSquare },
   { href: "/calendar", label: "Calendrier", icon: CalendarDays },
   { href: "/notes", label: "Notes", icon: NotebookText },
+  { href: "/invoicing", label: "Devis & Factures", icon: Receipt },
   { href: "/chat", label: "Assistant IA", icon: MessageSquare },
 ];
 
