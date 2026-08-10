@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { SearchDialog } from "@/components/search/search-dialog";
 import { NotificationBell } from "@/components/notifications/notification-bell";
+import { MobileNav } from "@/components/layout/mobile-nav";
 
 function initials(name?: string | null, email?: string | null) {
   if (name) {
@@ -27,8 +28,11 @@ export function Topbar() {
   const { data: session } = useSession();
 
   return (
-    <header className="flex h-16 items-center justify-between border-b bg-background px-6">
-      <SearchDialog />
+    <header className="flex h-16 items-center justify-between gap-2 border-b bg-background px-4 md:px-6">
+      <div className="flex items-center gap-2">
+        <MobileNav />
+        <SearchDialog />
+      </div>
       <div className="flex items-center gap-2">
         <NotificationBell />
         <DropdownMenu>

@@ -67,9 +67,13 @@ export function SearchDialog() {
     >
       <DialogTrigger
         render={
-          <Button variant="outline" size="sm" className="w-56 justify-start text-muted-foreground">
+          <Button
+            variant="outline"
+            size="sm"
+            className="w-9 justify-center text-muted-foreground sm:w-56 sm:justify-start"
+          >
             <Search className="h-4 w-4" />
-            Rechercher...
+            <span className="hidden sm:inline">Rechercher...</span>
           </Button>
         }
       />
