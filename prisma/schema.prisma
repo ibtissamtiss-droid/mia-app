@@ -72,6 +72,7 @@ model User {
   businessPlan  BusinessPlan?
   prospects     Prospect[]
   recommendations Recommendation[]
+  pricingSettings PricingSettings?
 }
 
 model PasswordResetToken {
@@ -251,6 +252,17 @@ model Prospect {
   updatedAt       DateTime       @updatedAt
 
   @@index([userId])
+}
+
+model PricingSettings {
+  id                  String   @id @default(cuid())
+  userId              String   @unique
+  user                User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  targetNetIncome     Float    @default(0)
+  workingDaysPerMonth Float    @default(18)
+  hoursPerDay         Float    @default(7)
+  monthlyExpenses     Float    @default(0)
+  updatedAt           DateTime @updatedAt
 }
 
 model Recommendation {

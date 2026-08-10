@@ -17,6 +17,7 @@ import {
   Briefcase,
   Users,
   Lightbulb,
+  Calculator,
 } from "lucide-react";
 
 const NAV_ITEMS = [
@@ -26,6 +27,7 @@ const NAV_ITEMS = [
   { href: "/notes", label: "Notes", icon: NotebookText },
   { href: "/invoicing", label: "Devis & Factures", icon: Receipt },
   { href: "/cotisations", label: "Cotisations", icon: PiggyBank },
+  { href: "/tarifs", label: "Calcul des tarifs", icon: Calculator },
   { href: "/plan-action", label: "Plan d'action", icon: Target },
   { href: "/previsionnel", label: "Prévisionnel", icon: TrendingUp },
   { href: "/business-plan", label: "Business plan", icon: Briefcase },
