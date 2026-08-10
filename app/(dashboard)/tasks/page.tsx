@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { TaskForm } from "@/components/tasks/task-form";
-import { TaskList } from "@/components/tasks/task-list";
+import { TaskBoard } from "@/components/tasks/task-board";
 import type { Task } from "@/types/models";
 
 export default function TasksPage() {
@@ -27,18 +27,20 @@ export default function TasksPage() {
   const load = () => setReloadKey((k) => k + 1);
 
   return (
-    <div className="mx-auto max-w-3xl space-y-6">
+    <div className="mx-auto max-w-5xl space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">Tâches</h1>
-          <p className="text-sm text-muted-foreground">Gérez vos tâches et priorités du moment.</p>
+          <p className="text-sm text-muted-foreground">
+            Glissez-déposez vos tâches entre les colonnes pour changer leur statut.
+          </p>
         </div>
         <TaskForm onCreated={load} />
       </div>
       {loading ? (
         <p className="text-sm text-muted-foreground">Chargement...</p>
       ) : (
-        <TaskList tasks={tasks} onChanged={load} />
+        <TaskBoard tasks={tasks} onChanged={load} />
       )}
     </div>
   );

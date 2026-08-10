@@ -49,31 +49,29 @@ export function TaskCard({
 
   return (
     <Card>
-      <CardContent className="flex items-start justify-between gap-3 py-4">
-        <div className="space-y-1">
-          <p className={task.status === "DONE" ? "line-through text-muted-foreground" : "font-medium"}>
+      <CardContent className="space-y-2 py-3">
+        <div className="flex items-start justify-between gap-2">
+          <p className={task.status === "DONE" ? "line-through text-muted-foreground" : "text-sm font-medium"}>
             {task.title}
           </p>
-          {task.description && (
-            <p className="text-sm text-muted-foreground">{task.description}</p>
+          <Button variant="ghost" size="icon" className="-mr-1 -mt-1 h-6 w-6 shrink-0" onClick={remove}>
+            <Trash2 className="h-3.5 w-3.5" />
+          </Button>
+        </div>
+        {task.description && (
+          <p className="text-xs text-muted-foreground">{task.description}</p>
+        )}
+        <div className="flex flex-wrap items-center gap-2">
+          <Badge variant={PRIORITY_VARIANT[task.priority]}>{PRIORITY_LABEL[task.priority]}</Badge>
+          {task.dueDate && (
+            <span className="text-xs text-muted-foreground">
+              {new Date(task.dueDate).toLocaleDateString("fr-FR")}
+            </span>
           )}
-          <div className="flex items-center gap-2 pt-1">
-            <Badge variant={PRIORITY_VARIANT[task.priority]}>{PRIORITY_LABEL[task.priority]}</Badge>
-            {task.dueDate && (
-              <span className="text-xs text-muted-foreground">
-                {new Date(task.dueDate).toLocaleDateString("fr-FR")}
-              </span>
-            )}
-          </div>
         </div>
-        <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" onClick={cycleStatus}>
-            {STATUS_OPTIONS.find((s) => s.value === task.status)?.label}
-          </Button>
-          <Button variant="ghost" size="icon" onClick={remove}>
-            <Trash2 className="h-4 w-4" />
-          </Button>
-        </div>
+        <Button variant="outline" size="sm" className="w-full" onClick={cycleStatus}>
+          {STATUS_OPTIONS.find((s) => s.value === task.status)?.label}
+        </Button>
       </CardContent>
     </Card>
   );
