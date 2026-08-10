@@ -11,6 +11,7 @@ import {
   LayoutDashboard,
   Settings,
   Receipt,
+  PiggyBank,
 } from "lucide-react";
 
 const NAV_ITEMS = [
@@ -19,6 +20,7 @@ const NAV_ITEMS = [
   { href: "/calendar", label: "Calendrier", icon: CalendarDays },
   { href: "/notes", label: "Notes", icon: NotebookText },
   { href: "/invoicing", label: "Devis & Factures", icon: Receipt },
+  { href: "/cotisations", label: "Cotisations", icon: PiggyBank },
   { href: "/chat", label: "Assistant IA", icon: MessageSquare },
 ];
 
