@@ -55,6 +55,7 @@ model User {
   resetTokens   PasswordResetToken[]
   actionPlan    ActionPlan?
   forecastEntries ForecastEntry[]
+  businessPlan  BusinessPlan?
 }
 
 model PasswordResetToken {
@@ -216,4 +217,18 @@ model ForecastEntry {
 
   @@unique([userId, month])
   @@index([userId])
+}
+
+model BusinessPlan {
+  id           String   @id @default(cuid())
+  userId       String   @unique
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  projectName  String
+  summary      String
+  presentation String
+  offer        String
+  market       String
+  strategy     String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 }

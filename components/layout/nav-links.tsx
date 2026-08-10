@@ -14,6 +14,7 @@ import {
   PiggyBank,
   Target,
   TrendingUp,
+  Briefcase,
 } from "lucide-react";
 
 const NAV_ITEMS = [
@@ -25,6 +26,7 @@ const NAV_ITEMS = [
   { href: "/cotisations", label: "Cotisations", icon: PiggyBank },
   { href: "/plan-action", label: "Plan d'action", icon: Target },
   { href: "/previsionnel", label: "Prévisionnel", icon: TrendingUp },
+  { href: "/business-plan", label: "Business plan", icon: Briefcase },
   { href: "/chat", label: "Assistant IA", icon: MessageSquare },
 ];
 
