@@ -53,6 +53,7 @@ model User {
   documents     Document[]
   googleAccount GoogleAccount?
   resetTokens   PasswordResetToken[]
+  actionPlan    ActionPlan?
 }
 
 model PasswordResetToken {
@@ -176,4 +177,28 @@ model DocumentItem {
   quantity    Float    @default(1)
   unitPrice   Float
   position    Int      @default(0)
+}
+
+model ActionPlan {
+  id        String           @id @default(cuid())
+  userId    String           @unique
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  goal      String
+  context   String?
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
+  steps     ActionPlanStep[]
+}
+
+model ActionPlanStep {
+  id          String     @id @default(cuid())
+  planId      String
+  plan        ActionPlan @relation(fields: [planId], references: [id], onDelete: Cascade)
+  title       String
+  description String?
+  done        Boolean    @default(false)
+  position    Int        @default(0)
+  createdAt   DateTime   @default(now())
+
+  @@index([planId])
 }
