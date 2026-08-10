@@ -4,10 +4,13 @@ import { authConfig } from "@/auth.config";
 
 const { auth } = NextAuth(authConfig);
 
-const PUBLIC_PATHS = ["/login", "/register"];
+const AUTH_ONLY_PATHS = ["/login", "/register"];
+const INFO_PATHS = ["/a-propos", "/confiance-securite", "/accessibilite"];
+const PUBLIC_PATHS = [...AUTH_ONLY_PATHS, ...INFO_PATHS];
 
 export default auth((req) => {
   const isPublic = PUBLIC_PATHS.some((p) => req.nextUrl.pathname.startsWith(p));
+  const isAuthOnly = AUTH_ONLY_PATHS.some((p) => req.nextUrl.pathname.startsWith(p));
   const isLoggedIn = !!req.auth;
 
   if (!isLoggedIn && !isPublic && req.nextUrl.pathname !== "/") {
@@ -15,7 +18,7 @@ export default auth((req) => {
     return NextResponse.redirect(loginUrl);
   }
 
-  if (isLoggedIn && isPublic) {
+  if (isLoggedIn && isAuthOnly) {
     const dashboardUrl = new URL("/dashboard", req.nextUrl.origin);
     return NextResponse.redirect(dashboardUrl);
   }
