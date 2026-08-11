@@ -64,6 +64,10 @@ model User {
   avatarUrl     String?
   cotisationRate Float    @default(0)
   acreEligible  Boolean   @default(false)
+  companyName    String?
+  companyAddress String?
+  siren          String?
+  vatApplicable  Boolean   @default(false)
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 

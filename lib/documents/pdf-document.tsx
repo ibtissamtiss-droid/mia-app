@@ -51,8 +51,21 @@ function formatDate(value: string | null) {
   return new Date(value).toLocaleDateString("fr-FR");
 }
 
-export function DocumentPdf({ document }: { document: BillingDocument }) {
+function formatSiren(siren: string) {
+  return siren.replace(/(\d{3})(?=\d)/g, "$1 ").trim();
+}
+
+export type Seller = {
+  name: string | null;
+  companyName: string | null;
+  companyAddress: string | null;
+  siren: string | null;
+  vatApplicable: boolean;
+};
+
+export function DocumentPdf({ document, seller }: { document: BillingDocument; seller: Seller }) {
   const { subtotal, tax, total } = documentTotals(document);
+  const sellerName = seller.companyName || seller.name;
 
   return (
     <PdfDocument>
@@ -70,21 +83,30 @@ export function DocumentPdf({ document }: { document: BillingDocument }) {
 
         <View style={[styles.section, styles.row]}>
           <View>
+            <Text style={styles.label}>Émetteur</Text>
+            {sellerName && <Text>{sellerName}</Text>}
+            {seller.companyAddress && <Text>{seller.companyAddress}</Text>}
+            {seller.siren && <Text>SIREN : {formatSiren(seller.siren)}</Text>}
+          </View>
+          <View>
             <Text style={styles.label}>Client</Text>
             <Text>{document.clientName}</Text>
             {document.clientEmail && <Text>{document.clientEmail}</Text>}
             {document.clientAddress && <Text>{document.clientAddress}</Text>}
           </View>
+        </View>
+
+        <View style={[styles.section, styles.row]}>
           <View>
             <Text style={styles.label}>Date d&apos;émission</Text>
             <Text>{formatDate(document.issueDate)}</Text>
-            {document.dueDate && (
-              <>
-                <Text style={[styles.label, { marginTop: 8 }]}>Échéance</Text>
-                <Text>{formatDate(document.dueDate)}</Text>
-              </>
-            )}
           </View>
+          {document.dueDate && (
+            <View>
+              <Text style={styles.label}>Échéance</Text>
+              <Text>{formatDate(document.dueDate)}</Text>
+            </View>
+          )}
         </View>
 
         <View style={styles.table}>
@@ -109,15 +131,32 @@ export function DocumentPdf({ document }: { document: BillingDocument }) {
             <Text>Sous-total</Text>
             <Text>{formatCurrency(subtotal)}</Text>
           </View>
-          <View style={styles.totalsRow}>
-            <Text>TVA ({document.taxRate}%)</Text>
-            <Text>{formatCurrency(tax)}</Text>
-          </View>
+          {seller.vatApplicable ? (
+            <View style={styles.totalsRow}>
+              <Text>TVA ({document.taxRate}%)</Text>
+              <Text>{formatCurrency(tax)}</Text>
+            </View>
+          ) : (
+            <Text style={{ fontSize: 8, color: "#666666", marginBottom: 2 }}>
+              TVA non applicable, art. 293 B du CGI
+            </Text>
+          )}
           <View style={styles.totalsGrandRow}>
             <Text>Total</Text>
             <Text>{formatCurrency(total)}</Text>
           </View>
         </View>
+
+        {document.type === "INVOICE" && (
+          <View style={styles.notes}>
+            <Text>
+              En cas de retard de paiement, une pénalité de retard est exigible (taux applicable :
+              3 fois le taux d&apos;intérêt légal), ainsi qu&apos;une indemnité forfaitaire pour
+              frais de recouvrement de 40 € (art. L441-10 et D441-5 du Code de commerce). Pas
+              d&apos;escompte pour paiement anticipé.
+            </Text>
+          </View>
+        )}
 
         {document.notes && (
           <View style={styles.notes}>
