@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { PageSpinner } from "@/components/ui/page-spinner";
 import { computeRates, type PricingSettings as Settings } from "@/lib/pricing";
 
 function formatEuro(value: number) {
@@ -50,7 +51,7 @@ export default function TarifsPage() {
       </div>
 
       {settings === null ? (
-        <p className="text-sm text-muted-foreground">Chargement...</p>
+        <PageSpinner />
       ) : (
         <>
           <Card>

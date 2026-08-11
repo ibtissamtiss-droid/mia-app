@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
+import { PageSpinner } from "@/components/ui/page-spinner";
 import { toast } from "sonner";
 import { CheckCircle2, Circle, Loader2, Sparkles } from "lucide-react";
 import type { Recommendation } from "@/types/models";
@@ -84,7 +85,7 @@ export default function RecommandationsPage() {
       </div>
 
       {recommendations === null ? (
-        <p className="text-sm text-muted-foreground">Chargement...</p>
+        <PageSpinner />
       ) : recommendations.length === 0 ? (
         <p className="text-sm text-muted-foreground">
           Cliquez sur « Générer » pour obtenir des recommandations basées sur vos factures,

@@ -6,6 +6,7 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { DocumentForm } from "@/components/invoicing/document-form";
 import { DocumentList } from "@/components/invoicing/document-list";
+import { PageSpinner } from "@/components/ui/page-spinner";
 import type { BillingDocument, DocumentType } from "@/types/models";
 
 type Summary = { invoiced: number; paid: number; pending: number };
@@ -92,7 +93,7 @@ export default function InvoicingPage() {
       </div>
 
       {loading ? (
-        <p className="text-sm text-muted-foreground">Chargement...</p>
+        <PageSpinner />
       ) : (
         <>
           <DocumentList documents={documents} />

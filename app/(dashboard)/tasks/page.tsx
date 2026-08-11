@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { TaskForm } from "@/components/tasks/task-form";
 import { TaskBoard } from "@/components/tasks/task-board";
+import { PageSpinner } from "@/components/ui/page-spinner";
 import type { Task } from "@/types/models";
 
 export default function TasksPage() {
@@ -38,7 +39,7 @@ export default function TasksPage() {
         <TaskForm onCreated={load} />
       </div>
       {loading ? (
-        <p className="text-sm text-muted-foreground">Chargement...</p>
+        <PageSpinner />
       ) : (
         <TaskBoard tasks={tasks} onChanged={load} />
       )}

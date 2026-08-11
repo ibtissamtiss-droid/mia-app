@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { NoteEditor } from "@/components/notes/note-editor";
 import { NoteCard } from "@/components/notes/note-card";
+import { PageSpinner } from "@/components/ui/page-spinner";
 import type { Note } from "@/types/models";
 
 export default function NotesPage() {
@@ -51,7 +52,7 @@ export default function NotesPage() {
         <NoteEditor onCreated={load} />
       </div>
       {loading ? (
-        <p className="text-sm text-muted-foreground">Chargement...</p>
+        <PageSpinner />
       ) : notes.length === 0 ? (
         <p className="text-sm text-muted-foreground">Aucune note pour le moment.</p>
       ) : (

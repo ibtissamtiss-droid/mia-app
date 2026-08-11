@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { ProspectForm } from "@/components/prospects/prospect-form";
 import { ProspectBoard } from "@/components/prospects/prospect-board";
 import { ProspectingIdeas } from "@/components/prospects/prospecting-ideas";
+import { PageSpinner } from "@/components/ui/page-spinner";
 import type { Prospect } from "@/types/models";
 
 export default function ProspectsPage() {
@@ -42,7 +43,7 @@ export default function ProspectsPage() {
       <ProspectingIdeas />
 
       {loading ? (
-        <p className="text-sm text-muted-foreground">Chargement...</p>
+        <PageSpinner />
       ) : (
         <ProspectBoard prospects={prospects} onChanged={load} />
       )}

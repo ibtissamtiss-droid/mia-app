@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { EventForm } from "@/components/calendar/event-form";
 import { CalendarView } from "@/components/calendar/calendar-view";
+import { PageSpinner } from "@/components/ui/page-spinner";
 import type { Event } from "@/types/models";
 
 export default function CalendarPage() {
@@ -36,7 +37,7 @@ export default function CalendarPage() {
         <EventForm onCreated={load} />
       </div>
       {loading ? (
-        <p className="text-sm text-muted-foreground">Chargement...</p>
+        <PageSpinner />
       ) : (
         <CalendarView events={events} onChanged={load} />
       )}

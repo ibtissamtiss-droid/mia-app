@@ -7,6 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { PageSpinner } from "@/components/ui/page-spinner";
 import { toast } from "sonner";
 import { Download, Loader2, Sparkles } from "lucide-react";
 import { computeForecastTotals, effectiveCotisationRate, type ForecastMonth } from "@/lib/forecast-calc";
@@ -168,7 +169,7 @@ export default function BusinessPlanPage() {
       </div>
 
       {plan === undefined ? (
-        <p className="text-sm text-muted-foreground">Chargement...</p>
+        <PageSpinner />
       ) : plan && !showForm ? (
         <Tabs defaultValue="presentation">
           <TabsList>
@@ -214,7 +215,7 @@ export default function BusinessPlanPage() {
 
           <TabsContent value="chiffrage" className="space-y-6 pt-4">
             {!financials ? (
-              <p className="text-sm text-muted-foreground">Chargement...</p>
+              <PageSpinner />
             ) : (
               <>
                 <LineItemsCard

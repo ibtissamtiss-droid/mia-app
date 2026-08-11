@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { PageSpinner } from "@/components/ui/page-spinner";
 import { toast } from "sonner";
 import { effectiveCotisationRate } from "@/lib/forecast-calc";
 
@@ -153,7 +154,7 @@ export default function CotisationsPage() {
       )}
 
       {loading ? (
-        <p className="text-sm text-muted-foreground">Chargement...</p>
+        <PageSpinner />
       ) : summary && summary.rate > 0 ? (
         <div className="grid gap-4 sm:grid-cols-3">
           {PERIODS.map((period) => {

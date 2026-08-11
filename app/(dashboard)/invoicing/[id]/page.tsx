@@ -13,6 +13,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { ArrowLeft, Download, Trash2 } from "lucide-react";
+import { PageSpinner } from "@/components/ui/page-spinner";
 import { documentTotals, type BillingDocument, type DocumentStatus } from "@/types/models";
 
 const STATUS_LABEL: Record<DocumentStatus, string> = {
@@ -60,7 +61,7 @@ export default function DocumentDetailPage() {
   };
 
   if (loading) {
-    return <p className="mx-auto max-w-2xl text-sm text-muted-foreground">Chargement...</p>;
+    return <PageSpinner />;
   }
 
   if (!document) {

@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { PageSpinner } from "@/components/ui/page-spinner";
 import { toast } from "sonner";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { computeForecastTotals, monthLabel, type ForecastMonth } from "@/lib/forecast-calc";
@@ -138,7 +139,7 @@ export default function PrevisionnelPage() {
         </CardHeader>
         <CardContent className="overflow-x-auto p-0">
           {months === null ? (
-            <p className="p-6 text-sm text-muted-foreground">Chargement...</p>
+            <PageSpinner className="py-16" />
           ) : (
             <table className="w-full text-sm">
               <thead>

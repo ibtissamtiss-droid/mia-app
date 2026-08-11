@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { PageSpinner } from "@/components/ui/page-spinner";
 import { toast } from "sonner";
 import { CheckCircle2, Circle, Loader2, Sparkles } from "lucide-react";
 
@@ -89,7 +90,7 @@ export default function PlanActionPage() {
       </div>
 
       {plan === undefined ? (
-        <p className="text-sm text-muted-foreground">Chargement...</p>
+        <PageSpinner />
       ) : plan && !showForm ? (
         <>
           <Card>
