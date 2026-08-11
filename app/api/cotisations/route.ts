@@ -22,7 +22,7 @@ export async function GET() {
 
   const user = await prisma.user.findUnique({
     where: { id: session.user.id },
-    select: { cotisationRate: true },
+    select: { cotisationRate: true, acreEligible: true },
   });
 
   const now = new Date();
@@ -34,25 +34,32 @@ export async function GET() {
 
   return NextResponse.json({
     rate: user?.cotisationRate ?? 0,
+    acreEligible: user?.acreEligible ?? false,
     revenue: { month, quarter, year },
   });
 }
 
-const rateSchema = z.object({ rate: z.number().min(0).max(100) });
+const patchSchema = z.object({
+  rate: z.number().min(0).max(100).optional(),
+  acreEligible: z.boolean().optional(),
+});
 
 export async function PATCH(req: Request) {
   const session = await auth();
   if (!session?.user) return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
 
   const body = await req.json();
-  const parsed = rateSchema.safeParse(body);
-  if (!parsed.success) {
-    return NextResponse.json({ error: "Taux invalide" }, { status: 400 });
+  const parsed = patchSchema.safeParse(body);
+  if (!parsed.success || (parsed.data.rate === undefined && parsed.data.acreEligible === undefined)) {
+    return NextResponse.json({ error: "Requête invalide" }, { status: 400 });
   }
 
   await prisma.user.update({
     where: { id: session.user.id },
-    data: { cotisationRate: parsed.data.rate },
+    data: {
+      ...(parsed.data.rate !== undefined && { cotisationRate: parsed.data.rate }),
+      ...(parsed.data.acreEligible !== undefined && { acreEligible: parsed.data.acreEligible }),
+    },
   });
 
   return NextResponse.json({ ok: true });

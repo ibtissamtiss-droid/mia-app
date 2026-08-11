@@ -11,9 +11,28 @@ export async function GET() {
   const plan = await prisma.businessPlan.findUnique({ where: { userId: session.user.id } });
   if (!plan) return new Response("Aucun business plan", { status: 404 });
 
-  const forecast = await getForecastSummary(session.user.id);
+  const userId = session.user.id;
+  const [forecast, startupCosts, financingSources, monthlyCharges, productMargins, user] = await Promise.all([
+    getForecastSummary(userId),
+    prisma.startupCost.findMany({ where: { userId }, orderBy: { position: "asc" } }),
+    prisma.financingSource.findMany({ where: { userId }, orderBy: { position: "asc" } }),
+    prisma.monthlyCharge.findMany({ where: { userId }, orderBy: { position: "asc" } }),
+    prisma.productMargin.findMany({ where: { userId }, orderBy: { position: "asc" } }),
+    prisma.user.findUnique({ where: { id: userId }, select: { cotisationRate: true, acreEligible: true } }),
+  ]);
 
-  const buffer = await renderToBuffer(<BusinessPlanPdf plan={plan} forecast={forecast} />);
+  const financials = {
+    startupCosts,
+    financingSources,
+    monthlyCharges,
+    productMargins,
+    rate: user?.cotisationRate ?? 0,
+    acreEligible: user?.acreEligible ?? false,
+  };
+
+  const buffer = await renderToBuffer(
+    <BusinessPlanPdf plan={plan} forecast={forecast} financials={financials} />
+  );
 
   return new Response(new Uint8Array(buffer), {
     headers: {

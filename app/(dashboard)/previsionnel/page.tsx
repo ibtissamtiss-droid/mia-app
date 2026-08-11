@@ -15,13 +15,15 @@ function formatEuro(value: number) {
 export default function PrevisionnelPage() {
   const [months, setMonths] = useState<MonthEntry[] | null>(null);
   const [rate, setRate] = useState(0);
+  const [acreEligible, setAcreEligible] = useState(false);
   const [saving, setSaving] = useState<string | null>(null);
 
   useEffect(() => {
     fetch("/api/previsionnel")
       .then((res) => res.json())
-      .then((data: { rate: number; months: MonthEntry[] }) => {
+      .then((data: { rate: number; acreEligible: boolean; months: MonthEntry[] }) => {
         setRate(data.rate);
+        setAcreEligible(data.acreEligible);
         setMonths(data.months);
       });
   }, []);
@@ -64,6 +66,11 @@ export default function PrevisionnelPage() {
             Cotisations
           </a>{" "}
           pour voir le net estimé après charges sociales.
+        </p>
+      )}
+      {acreEligible && (
+        <p className="rounded-md border bg-muted/40 p-3 text-sm text-muted-foreground">
+          Taux réduit ACRE appliqué (-50% sur vos cotisations la 1ère année).
         </p>
       )}
 

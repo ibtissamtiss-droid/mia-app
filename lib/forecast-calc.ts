@@ -24,6 +24,10 @@ export function monthLabel(key: string) {
 
 export type ForecastMonth = { month: string; revenue: number; expenses: number };
 
+export function effectiveCotisationRate(rate: number, acreEligible: boolean) {
+  return acreEligible ? rate / 2 : rate;
+}
+
 export function computeForecastTotals(months: ForecastMonth[], rate: number) {
   const totals = months.reduce(
     (acc, m) => ({ revenue: acc.revenue + m.revenue, expenses: acc.expenses + m.expenses }),

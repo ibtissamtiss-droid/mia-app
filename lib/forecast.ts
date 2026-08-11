@@ -1,5 +1,11 @@
 import { prisma } from "@/lib/db";
-import { monthKey, nextMonths, computeForecastTotals, type ForecastMonth } from "@/lib/forecast-calc";
+import {
+  monthKey,
+  nextMonths,
+  computeForecastTotals,
+  effectiveCotisationRate,
+  type ForecastMonth,
+} from "@/lib/forecast-calc";
 
 export * from "@/lib/forecast-calc";
 
@@ -7,12 +13,13 @@ const MONTHS_AHEAD = 12;
 
 export async function getForecastSummary(userId: string) {
   const [user, entries] = await Promise.all([
-    prisma.user.findUnique({ where: { id: userId }, select: { cotisationRate: true } }),
+    prisma.user.findUnique({ where: { id: userId }, select: { cotisationRate: true, acreEligible: true } }),
     prisma.forecastEntry.findMany({ where: { userId } }),
   ]);
 
   const entriesByKey = new Map(entries.map((e) => [monthKey(e.month), e]));
-  const rate = user?.cotisationRate ?? 0;
+  const acreEligible = user?.acreEligible ?? false;
+  const rate = effectiveCotisationRate(user?.cotisationRate ?? 0, acreEligible);
 
   const months: ForecastMonth[] = nextMonths(MONTHS_AHEAD).map((month) => {
     const key = monthKey(month);
@@ -26,5 +33,5 @@ export async function getForecastSummary(userId: string) {
 
   const totals = computeForecastTotals(months, rate);
 
-  return { rate, months, totals };
+  return { rate, acreEligible, months, totals };
 }

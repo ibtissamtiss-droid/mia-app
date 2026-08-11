@@ -4,11 +4,14 @@ import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
+import { effectiveCotisationRate } from "@/lib/forecast-calc";
 
 type Summary = {
   rate: number;
+  acreEligible: boolean;
   revenue: { month: number; quarter: number; year: number };
 };
 
@@ -27,6 +30,7 @@ export default function CotisationsPage() {
   const [rateInput, setRateInput] = useState("");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [savingAcre, setSavingAcre] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -64,6 +68,24 @@ export default function CotisationsPage() {
       toast.error("Échec de la mise à jour");
     }
   };
+
+  const saveAcre = async (checked: boolean) => {
+    setSavingAcre(true);
+    const res = await fetch("/api/cotisations", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ acreEligible: checked }),
+    });
+    setSavingAcre(false);
+    if (res.ok) {
+      setSummary((prev) => (prev ? { ...prev, acreEligible: checked } : prev));
+      toast.success("Préférence ACRE mise à jour");
+    } else {
+      toast.error("Échec de la mise à jour");
+    }
+  };
+
+  const effectiveRate = summary ? effectiveCotisationRate(summary.rate, summary.acreEligible) : 0;
 
   return (
     <div className="mx-auto max-w-2xl space-y-6">
@@ -104,13 +126,39 @@ export default function CotisationsPage() {
         </CardContent>
       </Card>
 
+      {!loading && summary && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">ACRE</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <label className="flex cursor-pointer items-start gap-3">
+              <Checkbox
+                checked={summary.acreEligible}
+                onCheckedChange={(checked) => saveAcre(checked === true)}
+                disabled={savingAcre}
+                className="mt-0.5"
+              />
+              <span className="text-sm">
+                <span className="font-medium">Je bénéficie de l&apos;ACRE</span>
+                <span className="block text-xs text-muted-foreground">
+                  L&apos;ACRE réduit vos cotisations sociales de moitié pendant votre 1ère année
+                  d&apos;activité, sous conditions d&apos;éligibilité. Vérifiez votre situation
+                  auprès de l&apos;URSSAF.
+                </span>
+              </span>
+            </label>
+          </CardContent>
+        </Card>
+      )}
+
       {loading ? (
         <p className="text-sm text-muted-foreground">Chargement...</p>
       ) : summary && summary.rate > 0 ? (
         <div className="grid gap-4 sm:grid-cols-3">
           {PERIODS.map((period) => {
             const revenue = summary.revenue[period.key];
-            const cotisations = revenue * (summary.rate / 100);
+            const cotisations = revenue * (effectiveRate / 100);
             return (
               <Card key={period.key}>
                 <CardHeader>

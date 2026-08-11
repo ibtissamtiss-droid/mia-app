@@ -8,8 +8,8 @@ export async function GET() {
   const session = await auth();
   if (!session?.user) return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
 
-  const { rate, months } = await getForecastSummary(session.user.id);
-  return NextResponse.json({ rate, months });
+  const { rate, acreEligible, months } = await getForecastSummary(session.user.id);
+  return NextResponse.json({ rate, acreEligible, months });
 }
 
 const patchSchema = z.object({
