@@ -24,15 +24,15 @@ const NAV_ITEMS = [
   { href: "/dashboard", label: "Tableau de bord", icon: LayoutDashboard },
   { href: "/tasks", label: "Tâches", icon: CheckSquare },
   { href: "/calendar", label: "Calendrier", icon: CalendarDays },
+  { href: "/prospects", label: "Recherche de clients", icon: Users },
   { href: "/notes", label: "Notes", icon: NotebookText },
   { href: "/invoicing", label: "Devis & Factures", icon: Receipt },
+  { href: "/plan-action", label: "Plan d'action", icon: Target },
+  { href: "/recommandations", label: "Recommandations", icon: Lightbulb },
   { href: "/cotisations", label: "Cotisations", icon: PiggyBank },
   { href: "/tarifs", label: "Calcul des tarifs", icon: Calculator },
-  { href: "/plan-action", label: "Plan d'action", icon: Target },
   { href: "/previsionnel", label: "Prévisionnel", icon: TrendingUp },
   { href: "/business-plan", label: "Business plan", icon: Briefcase },
-  { href: "/prospects", label: "Recherche de clients", icon: Users },
-  { href: "/recommandations", label: "Recommandations", icon: Lightbulb },
   { href: "/chat", label: "Assistant IA", icon: MessageSquare },
 ];
 
