@@ -10,6 +10,7 @@ export async function GET() {
   const prospects = await prisma.prospect.findMany({
     where: { userId: session.user.id },
     orderBy: { createdAt: "desc" },
+    take: 200,
   });
   return NextResponse.json({ prospects });
 }

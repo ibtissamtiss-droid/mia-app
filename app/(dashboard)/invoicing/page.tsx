@@ -1,47 +1,55 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
+import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { DocumentForm } from "@/components/invoicing/document-form";
 import { DocumentList } from "@/components/invoicing/document-list";
-import { documentTotals, type BillingDocument, type DocumentType } from "@/types/models";
+import type { BillingDocument, DocumentType } from "@/types/models";
+
+type Summary = { invoiced: number; paid: number; pending: number };
 
 export default function InvoicingPage() {
   const [documents, setDocuments] = useState<BillingDocument[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(false);
   const [type, setType] = useState<DocumentType>("QUOTE");
   const [reloadKey, setReloadKey] = useState(0);
+  const [summary, setSummary] = useState<Summary>({ invoiced: 0, paid: 0, pending: 0 });
 
   useEffect(() => {
     let cancelled = false;
-    fetch("/api/documents")
+    fetch(`/api/documents?type=${type}`)
       .then((res) => res.json())
-      .then((data) => {
+      .then((data: { documents: BillingDocument[]; hasMore: boolean }) => {
         if (cancelled) return;
         setDocuments(data.documents ?? []);
+        setHasMore(data.hasMore ?? false);
         setLoading(false);
       });
     return () => {
       cancelled = true;
     };
+  }, [type, reloadKey]);
+
+  useEffect(() => {
+    fetch("/api/documents/summary")
+      .then((res) => res.json())
+      .then((data: Summary) => setSummary(data));
   }, [reloadKey]);
 
   const load = () => setReloadKey((k) => k + 1);
 
-  const filtered = useMemo(() => documents.filter((d) => d.type === type), [documents, type]);
-
-  const accounting = useMemo(() => {
-    const invoices = documents.filter((d) => d.type === "INVOICE");
-    const invoiced = invoices.reduce((sum, d) => sum + documentTotals(d).total, 0);
-    const paid = invoices
-      .filter((d) => d.status === "PAID")
-      .reduce((sum, d) => sum + documentTotals(d).total, 0);
-    const pending = invoices
-      .filter((d) => d.status === "SENT")
-      .reduce((sum, d) => sum + documentTotals(d).total, 0);
-    return { invoiced, paid, pending };
-  }, [documents]);
+  const loadMore = async () => {
+    setLoadingMore(true);
+    const res = await fetch(`/api/documents?type=${type}&offset=${documents.length}`);
+    const data: { documents: BillingDocument[]; hasMore: boolean } = await res.json();
+    setDocuments((prev) => [...prev, ...data.documents]);
+    setHasMore(data.hasMore);
+    setLoadingMore(false);
+  };
 
   return (
     <div className="mx-auto max-w-3xl space-y-6">
@@ -57,23 +65,19 @@ export default function InvoicingPage() {
           <CardHeader>
             <CardTitle className="text-sm text-muted-foreground">Total facturé</CardTitle>
           </CardHeader>
-          <CardContent className="text-xl font-semibold">
-            {accounting.invoiced.toFixed(2)} €
-          </CardContent>
+          <CardContent className="text-xl font-semibold">{summary.invoiced.toFixed(2)} €</CardContent>
         </Card>
         <Card>
           <CardHeader>
             <CardTitle className="text-sm text-muted-foreground">Payé</CardTitle>
           </CardHeader>
-          <CardContent className="text-xl font-semibold">{accounting.paid.toFixed(2)} €</CardContent>
+          <CardContent className="text-xl font-semibold">{summary.paid.toFixed(2)} €</CardContent>
         </Card>
         <Card>
           <CardHeader>
             <CardTitle className="text-sm text-muted-foreground">En attente</CardTitle>
           </CardHeader>
-          <CardContent className="text-xl font-semibold">
-            {accounting.pending.toFixed(2)} €
-          </CardContent>
+          <CardContent className="text-xl font-semibold">{summary.pending.toFixed(2)} €</CardContent>
         </Card>
       </div>
 
@@ -90,7 +94,14 @@ export default function InvoicingPage() {
       {loading ? (
         <p className="text-sm text-muted-foreground">Chargement...</p>
       ) : (
-        <DocumentList documents={filtered} />
+        <>
+          <DocumentList documents={documents} />
+          {hasMore && (
+            <Button variant="outline" size="sm" onClick={loadMore} disabled={loadingMore}>
+              {loadingMore ? "Chargement..." : "Charger plus"}
+            </Button>
+          )}
+        </>
       )}
     </div>
   );

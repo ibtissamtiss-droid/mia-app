@@ -4,12 +4,15 @@ import { prisma } from "@/lib/db";
 import { documentSchema } from "@/lib/validators/document";
 import { generateDocumentNumber } from "@/lib/documents/number";
 
+const PAGE_SIZE = 20;
+
 export async function GET(req: Request) {
   const session = await auth();
   if (!session?.user) return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
 
   const { searchParams } = new URL(req.url);
   const type = searchParams.get("type");
+  const offset = Math.max(0, parseInt(searchParams.get("offset") || "0", 10) || 0);
 
   const documents = await prisma.document.findMany({
     where: {
@@ -18,8 +21,12 @@ export async function GET(req: Request) {
     },
     include: { items: { orderBy: { position: "asc" } } },
     orderBy: { createdAt: "desc" },
+    skip: offset,
+    take: PAGE_SIZE + 1,
   });
-  return NextResponse.json({ documents });
+
+  const hasMore = documents.length > PAGE_SIZE;
+  return NextResponse.json({ documents: documents.slice(0, PAGE_SIZE), hasMore });
 }
 
 export async function POST(req: Request) {
