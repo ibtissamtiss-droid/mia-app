@@ -64,7 +64,19 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
   ];
 
   const userContext = await buildUserContext(session.user.id);
-  const system = `${SYSTEM_PROMPT_BASE}\n\n--- Données de l'utilisateur ---\n${userContext}`;
+  const now = new Date();
+  const nowLabel = now.toLocaleString("fr-FR", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+  const system =
+    `${SYSTEM_PROMPT_BASE}\n\nNous sommes le ${nowLabel}. Utilise cette date comme référence pour toute ` +
+    `demande relative ("demain", "la semaine prochaine", "dans 3 jours"...) et pour répondre à toute question ` +
+    `sur la date ou l'heure actuelle.\n\n--- Données de l'utilisateur ---\n${userContext}`;
 
   const encoder = new TextEncoder();
   const userId = session.user.id;
