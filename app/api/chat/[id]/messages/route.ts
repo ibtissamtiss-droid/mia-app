@@ -3,6 +3,7 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/db";
 import { anthropic, CHAT_MODEL } from "@/lib/ai/client";
 import { checkRateLimit, rateLimitResponse } from "@/lib/rate-limit";
+import { buildUserContext } from "@/lib/ai/user-context";
 
 export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const session = await auth();
@@ -39,13 +40,21 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     content: m.content,
   }));
 
+  const userContext = await buildUserContext(session.user.id);
+
   let stream;
   try {
     stream = await anthropic.messages.create({
       model: CHAT_MODEL,
       max_tokens: 1024,
       system:
-        "Tu es MIA, un assistant personnel de productivité pour professionnels. Sois concis, concret et orienté action.",
+        "Tu es MIA, un assistant personnel de productivité pour professionnels indépendants et auto-entrepreneurs. " +
+        "Sois concis, concret et orienté action. Tu as accès en lecture seule aux données réelles de l'utilisateur " +
+        "ci-dessous (tâches, événements, notes, prospects, devis/factures, tarifs, business plan, prévisionnel) : " +
+        "utilise-les pour répondre précisément à ses questions sur son activité, sans les recopier intégralement " +
+        "si ce n'est pas demandé. Ces données peuvent être incomplètes ou dater de quelques minutes ; si une info " +
+        "manque, dis-le plutôt que d'inventer. Tu ne peux pas modifier ces données depuis cette conversation.\n\n" +
+        `--- Données de l'utilisateur ---\n${userContext}`,
       messages: history,
       stream: true,
     });
