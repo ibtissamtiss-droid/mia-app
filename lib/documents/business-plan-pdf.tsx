@@ -1,5 +1,6 @@
 import { Document as PdfDocument, Page, Text, View, StyleSheet, Svg, Rect, Line, G } from "@react-pdf/renderer";
-import { monthLabel, effectiveCotisationRate } from "@/lib/forecast";
+import { monthLabel } from "@/lib/forecast";
+import { computeFinancingGap, computeMonthlyResult, computeBreakevenMonths } from "@/lib/business-plan-calc";
 
 const styles = StyleSheet.create({
   page: { padding: 40, fontSize: 10, fontFamily: "Helvetica", color: "#111111" },
@@ -156,20 +157,15 @@ function LineItemsTable({ items }: { items: LineItem[] }) {
 }
 
 export function BusinessPlanPdf({ plan, forecast, financials }: BusinessPlanPdfProps) {
-  const totalStartupCosts = financials.startupCosts.reduce((s, i) => s + i.amount, 0);
-  const totalFinancing = financials.financingSources.reduce((s, i) => s + i.amount, 0);
-  const totalMonthlyCharges = financials.monthlyCharges.reduce((s, i) => s + i.amount, 0);
-  const monthlyRevenue = financials.productMargins.reduce((s, p) => s + p.unitPrice * p.monthlyVolume, 0);
-  const monthlyMargin = financials.productMargins.reduce(
-    (s, p) => s + (p.unitPrice - p.unitCost) * p.monthlyVolume,
-    0
-  );
-  const financingGap = totalStartupCosts - totalFinancing;
-  const effectiveRate = effectiveCotisationRate(financials.rate, financials.acreEligible);
-  const monthlyCotisations = monthlyRevenue * (effectiveRate / 100);
-  const monthlyResult = monthlyMargin - totalMonthlyCharges - monthlyCotisations;
-  const breakevenMonths =
-    financingGap > 0 && monthlyResult > 0 ? Math.ceil(financingGap / monthlyResult) : null;
+  const financingGap = computeFinancingGap(financials.startupCosts, financials.financingSources);
+  const { monthlyRevenue, monthlyMargin, totalMonthlyCharges, monthlyCotisations, monthlyResult } =
+    computeMonthlyResult({
+      productMargins: financials.productMargins,
+      monthlyCharges: financials.monthlyCharges,
+      rate: financials.rate,
+      acreEligible: financials.acreEligible,
+    });
+  const breakevenMonths = computeBreakevenMonths(financingGap, monthlyResult);
 
   return (
     <PdfDocument>

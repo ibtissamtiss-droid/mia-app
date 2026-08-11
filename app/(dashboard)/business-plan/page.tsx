@@ -10,7 +10,12 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { PageSpinner } from "@/components/ui/page-spinner";
 import { toast } from "sonner";
 import { Download, Loader2, Sparkles } from "lucide-react";
-import { computeForecastTotals, effectiveCotisationRate, type ForecastMonth } from "@/lib/forecast-calc";
+import { computeForecastTotals, type ForecastMonth } from "@/lib/forecast-calc";
+import {
+  computeFinancingGap,
+  computeMonthlyResult,
+  computeBreakevenMonths,
+} from "@/lib/business-plan-calc";
 import { LineItemsCard, formatEuro, type LineItem } from "@/components/business-plan/line-items-card";
 import { ProductMarginsCard, type ProductRow } from "@/components/business-plan/product-margins-card";
 
@@ -131,23 +136,17 @@ export default function BusinessPlanPage() {
   const rate = forecast?.rate ?? 0;
   const { cotisations, net, ...totals } = computeForecastTotals(forecast?.months ?? [], rate);
 
-  const totalStartupCosts = (financials?.startupCosts ?? []).reduce((s, i) => s + (i.amount || 0), 0);
-  const totalFinancing = (financials?.financingSources ?? []).reduce((s, i) => s + (i.amount || 0), 0);
-  const totalMonthlyCharges = (financials?.monthlyCharges ?? []).reduce((s, i) => s + (i.amount || 0), 0);
-  const monthlyRevenue = (financials?.productMargins ?? []).reduce(
-    (s, p) => s + p.unitPrice * p.monthlyVolume,
-    0
+  const financingGap = computeFinancingGap(
+    financials?.startupCosts ?? [],
+    financials?.financingSources ?? []
   );
-  const monthlyMargin = (financials?.productMargins ?? []).reduce(
-    (s, p) => s + (p.unitPrice - p.unitCost) * p.monthlyVolume,
-    0
-  );
-  const financingGap = totalStartupCosts - totalFinancing;
-  const effectiveRate = financials ? effectiveCotisationRate(financials.rate, financials.acreEligible) : 0;
-  const monthlyCotisations = monthlyRevenue * (effectiveRate / 100);
-  const monthlyResult = monthlyMargin - totalMonthlyCharges - monthlyCotisations;
-  const breakevenMonths =
-    financingGap > 0 && monthlyResult > 0 ? Math.ceil(financingGap / monthlyResult) : null;
+  const { monthlyRevenue, totalMonthlyCharges, monthlyCotisations, monthlyResult } = computeMonthlyResult({
+    productMargins: financials?.productMargins ?? [],
+    monthlyCharges: financials?.monthlyCharges ?? [],
+    rate: financials?.rate ?? 0,
+    acreEligible: financials?.acreEligible ?? false,
+  });
+  const breakevenMonths = computeBreakevenMonths(financingGap, monthlyResult);
 
   return (
     <div className="mx-auto max-w-2xl space-y-6">
