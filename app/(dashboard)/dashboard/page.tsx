@@ -3,6 +3,7 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/db";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { OnboardingChecklist } from "@/components/dashboard/onboarding-checklist";
 
 export default async function DashboardPage() {
   const session = await auth();
@@ -12,22 +13,28 @@ export default async function DashboardPage() {
   const endOfDay = new Date(now);
   endOfDay.setHours(23, 59, 59, 999);
 
-  const [openTasks, todayEvents, recentNotes] = await Promise.all([
-    prisma.task.findMany({
-      where: { userId, status: { not: "DONE" } },
-      orderBy: { dueDate: "asc" },
-      take: 5,
-    }),
-    prisma.event.findMany({
-      where: { userId, startTime: { gte: now, lte: endOfDay } },
-      orderBy: { startTime: "asc" },
-    }),
-    prisma.note.findMany({
-      where: { userId },
-      orderBy: { updatedAt: "desc" },
-      take: 3,
-    }),
-  ]);
+  const [openTasks, todayEvents, recentNotes, prospectCount, actionPlan, businessPlan, user, documentCount] =
+    await Promise.all([
+      prisma.task.findMany({
+        where: { userId, status: { not: "DONE" } },
+        orderBy: { dueDate: "asc" },
+        take: 5,
+      }),
+      prisma.event.findMany({
+        where: { userId, startTime: { gte: now, lte: endOfDay } },
+        orderBy: { startTime: "asc" },
+      }),
+      prisma.note.findMany({
+        where: { userId },
+        orderBy: { updatedAt: "desc" },
+        take: 3,
+      }),
+      prisma.prospect.count({ where: { userId } }),
+      prisma.actionPlan.findUnique({ where: { userId } }),
+      prisma.businessPlan.findUnique({ where: { userId } }),
+      prisma.user.findUnique({ where: { id: userId }, select: { cotisationRate: true } }),
+      prisma.document.count({ where: { userId } }),
+    ]);
 
   return (
     <div className="mx-auto max-w-4xl space-y-6">
@@ -37,6 +44,13 @@ export default async function DashboardPage() {
         </h1>
         <p className="text-sm text-muted-foreground">Voici un aperçu de votre journée.</p>
       </div>
+
+      <OnboardingChecklist
+        hasProspect={prospectCount > 0}
+        hasPlan={!!actionPlan || !!businessPlan}
+        hasCotisationRate={(user?.cotisationRate ?? 0) > 0}
+        hasDocument={documentCount > 0}
+      />
 
       <div className="grid gap-4 md:grid-cols-3">
         <Card>
