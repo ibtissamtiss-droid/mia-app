@@ -4,6 +4,7 @@ import { prisma } from "@/lib/db";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { OnboardingChecklist } from "@/components/dashboard/onboarding-checklist";
+import { DailyBriefingCard } from "@/components/dashboard/daily-briefing-card";
 
 export default async function DashboardPage() {
   const session = await auth();
@@ -44,6 +45,8 @@ export default async function DashboardPage() {
         </h1>
         <p className="text-sm text-muted-foreground">Voici un aperçu de votre journée.</p>
       </div>
+
+      <DailyBriefingCard />
 
       <OnboardingChecklist
         hasProspect={prospectCount > 0}

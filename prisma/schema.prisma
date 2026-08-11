@@ -88,6 +88,7 @@ model User {
   financingSources FinancingSource[]
   monthlyCharges   MonthlyCharge[]
   productMargins   ProductMargin[]
+  dailyBriefings   DailyBriefing[]
 }
 
 model PasswordResetToken {
@@ -340,6 +341,18 @@ model ProductMargin {
   position      Int      @default(0)
   createdAt     DateTime @default(now())
 
+  @@index([userId])
+}
+
+model DailyBriefing {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  date      DateTime
+  content   String
+  createdAt DateTime @default(now())
+
+  @@unique([userId, date])
   @@index([userId])
 }
 
