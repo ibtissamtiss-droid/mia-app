@@ -2,10 +2,14 @@ import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/db";
 import { anthropic, CHAT_MODEL } from "@/lib/ai/client";
+import { checkRateLimit, rateLimitResponse } from "@/lib/rate-limit";
 
 export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const session = await auth();
   if (!session?.user) return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
+
+  const { allowed } = await checkRateLimit(`chat:${session.user.id}`, 30, 60 * 60 * 1000);
+  if (!allowed) return rateLimitResponse();
 
   const { id } = await params;
   const conversation = await prisma.chatConversation.findUnique({
@@ -35,14 +39,19 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     content: m.content,
   }));
 
-  const stream = await anthropic.messages.create({
-    model: CHAT_MODEL,
-    max_tokens: 1024,
-    system:
-      "Tu es MIA, un assistant personnel de productivité pour professionnels. Sois concis, concret et orienté action.",
-    messages: history,
-    stream: true,
-  });
+  let stream;
+  try {
+    stream = await anthropic.messages.create({
+      model: CHAT_MODEL,
+      max_tokens: 1024,
+      system:
+        "Tu es MIA, un assistant personnel de productivité pour professionnels. Sois concis, concret et orienté action.",
+      messages: history,
+      stream: true,
+    });
+  } catch {
+    return NextResponse.json({ error: "Échec de la réponse, réessayez" }, { status: 502 });
+  }
 
   const encoder = new TextEncoder();
   let assistantReply = "";

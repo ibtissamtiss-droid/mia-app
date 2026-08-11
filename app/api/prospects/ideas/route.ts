@@ -3,6 +3,7 @@ import { z } from "zod";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/db";
 import { anthropic, CHAT_MODEL } from "@/lib/ai/client";
+import { checkRateLimit, rateLimitResponse } from "@/lib/rate-limit";
 
 const bodySchema = z.object({ context: z.string().trim().max(1000).optional() });
 
@@ -17,6 +18,9 @@ function parseIdeas(text: string) {
 export async function POST(req: Request) {
   const session = await auth();
   if (!session?.user) return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
+
+  const { allowed } = await checkRateLimit(`prospect-ideas:${session.user.id}`, 15, 60 * 60 * 1000);
+  if (!allowed) return rateLimitResponse();
 
   const parsed = bodySchema.safeParse(await req.json());
   if (!parsed.success) {
@@ -37,16 +41,21 @@ export async function POST(req: Request) {
     );
   }
 
-  const response = await anthropic.messages.create({
-    model: CHAT_MODEL,
-    max_tokens: 800,
-    system:
-      "Tu es MIA, un assistant qui aide des freelances et indépendants à trouver de nouveaux clients. " +
-      "Réponds UNIQUEMENT avec un objet JSON valide, sans texte autour, au format exact: " +
-      '{"ideas": ["idée courte et concrète", ...]}. ' +
-      "Propose entre 5 et 8 pistes concrètes (canaux, plateformes, communautés, événements, types de partenariats) adaptées à l'activité décrite, en français.",
-    messages: [{ role: "user", content: context }],
-  });
+  let response;
+  try {
+    response = await anthropic.messages.create({
+      model: CHAT_MODEL,
+      max_tokens: 800,
+      system:
+        "Tu es MIA, un assistant qui aide des freelances et indépendants à trouver de nouveaux clients. " +
+        "Réponds UNIQUEMENT avec un objet JSON valide, sans texte autour, au format exact: " +
+        '{"ideas": ["idée courte et concrète", ...]}. ' +
+        "Propose entre 5 et 8 pistes concrètes (canaux, plateformes, communautés, événements, types de partenariats) adaptées à l'activité décrite, en français.",
+      messages: [{ role: "user", content: context }],
+    });
+  } catch {
+    return NextResponse.json({ error: "Échec de la génération, réessayez" }, { status: 502 });
+  }
 
   const text = response.content
     .filter((block) => block.type === "text")

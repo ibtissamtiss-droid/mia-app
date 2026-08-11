@@ -4,10 +4,18 @@ import { prisma } from "@/lib/db";
 import { generateRawToken, hashToken } from "@/lib/tokens";
 import { resend, EMAIL_FROM } from "@/lib/email/resend";
 import { buildResetPasswordHtml } from "@/lib/email/reset-password";
+import { checkRateLimit, getClientIp, rateLimitResponse } from "@/lib/rate-limit";
 
 const schema = z.object({ email: z.string().email() });
 
 export async function POST(req: Request) {
+  const { allowed } = await checkRateLimit(
+    `forgot-password:${getClientIp(req)}`,
+    5,
+    60 * 60 * 1000
+  );
+  if (!allowed) return rateLimitResponse();
+
   const body = await req.json();
   const parsed = schema.safeParse(body);
   if (!parsed.success) {

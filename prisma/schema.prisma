@@ -7,6 +7,12 @@ datasource db {
   provider = "postgresql"
 }
 
+model RateLimitBucket {
+  key         String   @id
+  windowStart DateTime
+  count       Int      @default(1)
+}
+
 enum TaskStatus {
   TODO
   IN_PROGRESS

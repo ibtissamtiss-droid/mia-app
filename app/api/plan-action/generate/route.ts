@@ -3,6 +3,7 @@ import { z } from "zod";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/db";
 import { anthropic, CHAT_MODEL } from "@/lib/ai/client";
+import { checkRateLimit, rateLimitResponse } from "@/lib/rate-limit";
 
 const bodySchema = z.object({
   goal: z.string().trim().min(1).max(500),
@@ -25,27 +26,35 @@ export async function POST(req: Request) {
   const session = await auth();
   if (!session?.user) return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
 
+  const { allowed } = await checkRateLimit(`plan-action:${session.user.id}`, 10, 60 * 60 * 1000);
+  if (!allowed) return rateLimitResponse();
+
   const parsed = bodySchema.safeParse(await req.json());
   if (!parsed.success) {
     return NextResponse.json({ error: "Objectif requis" }, { status: 400 });
   }
   const { goal, context } = parsed.data;
 
-  const response = await anthropic.messages.create({
-    model: CHAT_MODEL,
-    max_tokens: 1500,
-    system:
-      "Tu es MIA, un assistant qui aide des indépendants et freelances à construire un plan d'action concret. " +
-      "Réponds UNIQUEMENT avec un objet JSON valide, sans texte autour, au format exact: " +
-      '{"steps": [{"title": "string courte et actionnable", "description": "1-2 phrases explicatives"}]}. ' +
-      "Propose entre 5 et 8 étapes concrètes, réalistes et ordonnées dans le temps, en français.",
-    messages: [
-      {
-        role: "user",
-        content: `Objectif: ${goal}${context ? `\nContexte / situation actuelle: ${context}` : ""}`,
-      },
-    ],
-  });
+  let response;
+  try {
+    response = await anthropic.messages.create({
+      model: CHAT_MODEL,
+      max_tokens: 1500,
+      system:
+        "Tu es MIA, un assistant qui aide des indépendants et freelances à construire un plan d'action concret. " +
+        "Réponds UNIQUEMENT avec un objet JSON valide, sans texte autour, au format exact: " +
+        '{"steps": [{"title": "string courte et actionnable", "description": "1-2 phrases explicatives"}]}. ' +
+        "Propose entre 5 et 8 étapes concrètes, réalistes et ordonnées dans le temps, en français.",
+      messages: [
+        {
+          role: "user",
+          content: `Objectif: ${goal}${context ? `\nContexte / situation actuelle: ${context}` : ""}`,
+        },
+      ],
+    });
+  } catch {
+    return NextResponse.json({ error: "Échec de la génération du plan, réessayez" }, { status: 502 });
+  }
 
   const text = response.content
     .filter((block) => block.type === "text")
