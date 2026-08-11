@@ -15,6 +15,14 @@ export function nextMonths(count: number) {
   return months;
 }
 
+export function yearMonths(year: number) {
+  const months: Date[] = [];
+  for (let i = 0; i < 12; i++) {
+    months.push(monthStart(year, i));
+  }
+  return months;
+}
+
 export function monthLabel(key: string) {
   const [year, month] = key.split("-").map(Number);
   const date = new Date(Date.UTC(year, month - 1, 1));

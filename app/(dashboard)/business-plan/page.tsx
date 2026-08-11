@@ -51,7 +51,9 @@ export default function BusinessPlanPage() {
     targetClients: "",
     objectives: "",
   });
-  const [forecast, setForecast] = useState<{ rate: number; months: ForecastMonth[] } | null>(null);
+  const [forecast, setForecast] = useState<{ year: number; rate: number; months: ForecastMonth[] } | null>(
+    null
+  );
   const [financials, setFinancials] = useState<Financials | null>(null);
 
   useEffect(() => {
@@ -63,7 +65,7 @@ export default function BusinessPlanPage() {
       });
     fetch("/api/previsionnel")
       .then((res) => res.json())
-      .then((data: { rate: number; months: ForecastMonth[] }) => setForecast(data));
+      .then((data: { year: number; rate: number; months: ForecastMonth[] }) => setForecast(data));
     fetch("/api/business-plan/financials")
       .then((res) => res.json())
       .then((data: Financials) => setFinancials(data));
@@ -301,7 +303,9 @@ export default function BusinessPlanPage() {
 
                 <Card>
                   <CardHeader>
-                    <CardTitle className="text-base">Prévisionnel financier (12 mois)</CardTitle>
+                    <CardTitle className="text-base">
+                      Prévisionnel financier {forecast?.year ?? ""}
+                    </CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-2">
                     <div className="grid gap-4 sm:grid-cols-4">

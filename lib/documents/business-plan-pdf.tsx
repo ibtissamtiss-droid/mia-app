@@ -1,4 +1,4 @@
-import { Document as PdfDocument, Page, Text, View, StyleSheet } from "@react-pdf/renderer";
+import { Document as PdfDocument, Page, Text, View, StyleSheet, Svg, Rect, Line, G } from "@react-pdf/renderer";
 import { monthLabel, effectiveCotisationRate } from "@/lib/forecast";
 
 const styles = StyleSheet.create({
@@ -20,6 +20,10 @@ const styles = StyleSheet.create({
   col: { flex: 1, textAlign: "right" },
   colMonth: { flex: 2 },
   colLabel: { flex: 2 },
+  chartLegend: { flexDirection: "row", gap: 16, marginTop: 8 },
+  chartLegendItem: { flexDirection: "row", alignItems: "center", gap: 4 },
+  chartLegendSwatch: { width: 8, height: 8 },
+  chartLegendLabel: { fontSize: 8, color: "#666666" },
   totalsRow: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -52,6 +56,7 @@ type BusinessPlanPdfProps = {
     strategy: string;
   };
   forecast: {
+    year: number;
     rate: number;
     months: ForecastMonth[];
     totals: { revenue: number; expenses: number; cotisations: number; net: number };
@@ -68,6 +73,65 @@ type BusinessPlanPdfProps = {
 
 function formatCurrency(value: number) {
   return `${value.toFixed(2)} €`;
+}
+
+const MONTH_ABBR = ["Jan", "Fév", "Mar", "Avr", "Mai", "Jun", "Jul", "Aoû", "Sep", "Oct", "Nov", "Déc"];
+
+function monthAbbrev(key: string) {
+  return MONTH_ABBR[Number(key.split("-")[1]) - 1];
+}
+
+const CHART_WIDTH = 515;
+const CHART_HEIGHT = 110;
+
+function RevenueChart({ months }: { months: ForecastMonth[] }) {
+  const groupWidth = CHART_WIDTH / months.length;
+  const barWidth = groupWidth / 2 - 4;
+  const maxValue = Math.max(1, ...months.map((m) => Math.max(m.revenue, m.expenses)));
+
+  return (
+    <View>
+      <Svg width={CHART_WIDTH} height={CHART_HEIGHT + 14}>
+        {months.map((m, i) => {
+          const x = i * groupWidth;
+          const revenueHeight = (m.revenue / maxValue) * CHART_HEIGHT;
+          const expensesHeight = (m.expenses / maxValue) * CHART_HEIGHT;
+          return (
+            <G key={m.month}>
+              <Rect
+                x={x + 2}
+                y={CHART_HEIGHT - revenueHeight}
+                width={barWidth}
+                height={revenueHeight}
+                fill="#4f46e5"
+              />
+              <Rect
+                x={x + barWidth + 6}
+                y={CHART_HEIGHT - expensesHeight}
+                width={barWidth}
+                height={expensesHeight}
+                fill="#d4d4d8"
+              />
+              <Text x={x + groupWidth / 2} y={CHART_HEIGHT + 11} style={{ fontSize: 6, fill: "#666666", textAnchor: "middle" }}>
+                {monthAbbrev(m.month)}
+              </Text>
+            </G>
+          );
+        })}
+        <Line x1={0} y1={CHART_HEIGHT} x2={CHART_WIDTH} y2={CHART_HEIGHT} stroke="#111111" strokeWidth={1} />
+      </Svg>
+      <View style={styles.chartLegend}>
+        <View style={styles.chartLegendItem}>
+          <View style={[styles.chartLegendSwatch, { backgroundColor: "#4f46e5" }]} />
+          <Text style={styles.chartLegendLabel}>CA prévu</Text>
+        </View>
+        <View style={styles.chartLegendItem}>
+          <View style={[styles.chartLegendSwatch, { backgroundColor: "#d4d4d8" }]} />
+          <Text style={styles.chartLegendLabel}>Dépenses</Text>
+        </View>
+      </View>
+    </View>
+  );
 }
 
 function LineItemsTable({ items }: { items: LineItem[] }) {
@@ -209,7 +273,8 @@ export function BusinessPlanPdf({ plan, forecast, financials }: BusinessPlanPdfP
         </View>
 
         <View style={styles.section} break>
-          <Text style={styles.heading}>Prévisionnel financier (12 mois)</Text>
+          <Text style={styles.heading}>Prévisionnel financier {forecast.year}</Text>
+          <RevenueChart months={forecast.months} />
           <View style={styles.table}>
             <View style={styles.tableHeader}>
               <Text style={styles.colMonth}>Mois</Text>
@@ -233,7 +298,7 @@ export function BusinessPlanPdf({ plan, forecast, financials }: BusinessPlanPdfP
             })}
           </View>
           <View style={styles.totalsRow}>
-            <Text>Total sur 12 mois</Text>
+            <Text>Total sur l&apos;année</Text>
             <Text>Net estimé: {formatCurrency(forecast.totals.net)}</Text>
           </View>
         </View>

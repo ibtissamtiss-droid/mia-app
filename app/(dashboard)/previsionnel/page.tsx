@@ -2,8 +2,10 @@
 
 import { useEffect, useState } from "react";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { computeForecastTotals, monthLabel, type ForecastMonth } from "@/lib/forecast-calc";
 
 type MonthEntry = ForecastMonth;
@@ -13,19 +15,26 @@ function formatEuro(value: number) {
 }
 
 export default function PrevisionnelPage() {
+  const [year, setYear] = useState<number | null>(null);
   const [months, setMonths] = useState<MonthEntry[] | null>(null);
   const [rate, setRate] = useState(0);
   const [acreEligible, setAcreEligible] = useState(false);
   const [saving, setSaving] = useState<string | null>(null);
 
-  useEffect(() => {
-    fetch("/api/previsionnel")
+  const load = (y?: number) => {
+    const url = y ? `/api/previsionnel?year=${y}` : "/api/previsionnel";
+    fetch(url)
       .then((res) => res.json())
-      .then((data: { rate: number; acreEligible: boolean; months: MonthEntry[] }) => {
+      .then((data: { year: number; rate: number; acreEligible: boolean; months: MonthEntry[] }) => {
+        setYear(data.year);
         setRate(data.rate);
         setAcreEligible(data.acreEligible);
         setMonths(data.months);
       });
+  };
+
+  useEffect(() => {
+    load();
   }, []);
 
   const updateLocal = (month: string, field: "revenue" | "expenses", value: number) => {
@@ -52,11 +61,25 @@ export default function PrevisionnelPage() {
 
   return (
     <div className="mx-auto max-w-4xl space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Prévisionnel financier</h1>
-        <p className="text-sm text-muted-foreground">
-          Estimez votre chiffre d&apos;affaires et vos dépenses sur les 12 prochains mois.
-        </p>
+      <div className="flex items-center justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-semibold tracking-tight">
+            Prévisionnel financier {year ?? ""}
+          </h1>
+          <p className="text-sm text-muted-foreground">
+            Estimez votre chiffre d&apos;affaires et vos dépenses sur l&apos;année civile.
+          </p>
+        </div>
+        {year !== null && (
+          <div className="flex items-center gap-1">
+            <Button variant="outline" size="icon" onClick={() => load(year - 1)}>
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+            <Button variant="outline" size="icon" onClick={() => load(year + 1)}>
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          </div>
+        )}
       </div>
 
       {rate === 0 && (

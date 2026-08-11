@@ -4,12 +4,18 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/db";
 import { getForecastSummary, monthStart } from "@/lib/forecast";
 
-export async function GET() {
+export async function GET(req: Request) {
   const session = await auth();
   if (!session?.user) return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
 
-  const { rate, acreEligible, months } = await getForecastSummary(session.user.id);
-  return NextResponse.json({ rate, acreEligible, months });
+  const yearParam = new URL(req.url).searchParams.get("year");
+  const year = yearParam ? parseInt(yearParam, 10) : undefined;
+
+  const { year: resolvedYear, rate, acreEligible, months } = await getForecastSummary(
+    session.user.id,
+    year && !isNaN(year) ? year : undefined
+  );
+  return NextResponse.json({ year: resolvedYear, rate, acreEligible, months });
 }
 
 const patchSchema = z.object({
