@@ -238,12 +238,12 @@ export default function BusinessPlanPage() {
                   totalLabel="Total du financement"
                 />
 
-                <Card className={financingGap > 0 ? "border-orange-300" : "border-primary/40"}>
+                <Card className={financingGap > 0 ? "border-destructive/40" : ""}>
                   <CardContent className="flex items-center justify-between py-4">
                     <span className="text-sm font-medium">
                       {financingGap > 0 ? "Reste à financer" : "Financement suffisant"}
                     </span>
-                    <span className={financingGap > 0 ? "font-semibold text-orange-600" : "font-semibold text-primary"}>
+                    <span className={financingGap > 0 ? "font-semibold text-destructive" : "font-semibold"}>
                       {formatEuro(Math.abs(financingGap))}
                     </span>
                   </CardContent>
@@ -287,7 +287,7 @@ export default function BusinessPlanPage() {
                       </div>
                       <div>
                         <p className="text-xs text-muted-foreground">Résultat mensuel net</p>
-                        <p className={monthlyResult >= 0 ? "font-semibold text-primary" : "font-semibold text-orange-600"}>
+                        <p className={monthlyResult >= 0 ? "font-semibold" : "font-semibold text-destructive"}>
                           {formatEuro(monthlyResult)}
                         </p>
                       </div>
@@ -324,7 +324,9 @@ export default function BusinessPlanPage() {
                       </div>
                       <div>
                         <p className="text-xs text-muted-foreground">Net estimé</p>
-                        <p className="font-semibold text-primary">{formatEuro(net)}</p>
+                        <p className={net >= 0 ? "font-semibold" : "font-semibold text-destructive"}>
+                          {formatEuro(net)}
+                        </p>
                       </div>
                     </div>
                     <p className="pt-2 text-xs text-muted-foreground">

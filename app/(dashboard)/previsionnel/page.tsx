@@ -128,7 +128,9 @@ export default function PrevisionnelPage() {
             <CardTitle className="text-sm text-muted-foreground">Net estimé</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-lg font-semibold text-primary">{formatEuro(totalNet)}</p>
+            <p className={`text-lg font-semibold ${totalNet >= 0 ? "" : "text-destructive"}`}>
+              {formatEuro(totalNet)}
+            </p>
           </CardContent>
         </Card>
       </div>
@@ -187,7 +189,11 @@ export default function PrevisionnelPage() {
                       <td className="whitespace-nowrap px-4 py-2 text-muted-foreground">
                         {formatEuro(cotisations)}
                       </td>
-                      <td className="whitespace-nowrap px-4 py-2 font-medium">{formatEuro(net)}</td>
+                      <td
+                        className={`whitespace-nowrap px-4 py-2 font-medium ${net >= 0 ? "" : "text-destructive"}`}
+                      >
+                        {formatEuro(net)}
+                      </td>
                     </tr>
                   );
                 })}
