@@ -1,30 +1,9 @@
 import { prisma } from "@/lib/db";
+import { monthKey, nextMonths, computeForecastTotals, type ForecastMonth } from "@/lib/forecast-calc";
+
+export * from "@/lib/forecast-calc";
 
 const MONTHS_AHEAD = 12;
-
-export function monthKey(d: Date) {
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
-}
-
-export function monthStart(year: number, monthIndex: number) {
-  return new Date(Date.UTC(year, monthIndex, 1));
-}
-
-export function nextMonths(count: number) {
-  const now = new Date();
-  const months: Date[] = [];
-  for (let i = 0; i < count; i++) {
-    months.push(monthStart(now.getFullYear(), now.getMonth() + i));
-  }
-  return months;
-}
-
-export function monthLabel(key: string) {
-  const [year, month] = key.split("-").map(Number);
-  const date = new Date(Date.UTC(year, month - 1, 1));
-  const label = date.toLocaleDateString("fr-FR", { month: "long", year: "numeric", timeZone: "UTC" });
-  return label.charAt(0).toUpperCase() + label.slice(1);
-}
 
 export async function getForecastSummary(userId: string) {
   const [user, entries] = await Promise.all([
@@ -35,7 +14,7 @@ export async function getForecastSummary(userId: string) {
   const entriesByKey = new Map(entries.map((e) => [monthKey(e.month), e]));
   const rate = user?.cotisationRate ?? 0;
 
-  const months = nextMonths(MONTHS_AHEAD).map((month) => {
+  const months: ForecastMonth[] = nextMonths(MONTHS_AHEAD).map((month) => {
     const key = monthKey(month);
     const entry = entriesByKey.get(key);
     return {
@@ -45,12 +24,7 @@ export async function getForecastSummary(userId: string) {
     };
   });
 
-  const totals = months.reduce(
-    (acc, m) => ({ revenue: acc.revenue + m.revenue, expenses: acc.expenses + m.expenses }),
-    { revenue: 0, expenses: 0 }
-  );
-  const cotisations = totals.revenue * (rate / 100);
-  const net = totals.revenue - totals.expenses - cotisations;
+  const totals = computeForecastTotals(months, rate);
 
-  return { rate, months, totals: { ...totals, cotisations, net } };
+  return { rate, months, totals };
 }

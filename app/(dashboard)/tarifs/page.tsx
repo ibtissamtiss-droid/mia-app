@@ -4,26 +4,10 @@ import { useEffect, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-
-type Settings = {
-  targetNetIncome: number;
-  workingDaysPerMonth: number;
-  hoursPerDay: number;
-  monthlyExpenses: number;
-};
+import { computeRates, type PricingSettings as Settings } from "@/lib/pricing";
 
 function formatEuro(value: number) {
   return `${value.toLocaleString("fr-FR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €`;
-}
-
-function computeRates(settings: Settings, cotisationRate: number) {
-  const netPlusExpenses = settings.targetNetIncome + settings.monthlyExpenses;
-  const rateFactor = 1 - cotisationRate / 100;
-  const grossRevenue = rateFactor > 0 ? netPlusExpenses / rateFactor : 0;
-  const cotisations = grossRevenue - netPlusExpenses;
-  const dailyRate = settings.workingDaysPerMonth > 0 ? grossRevenue / settings.workingDaysPerMonth : 0;
-  const hourlyRate = settings.hoursPerDay > 0 ? dailyRate / settings.hoursPerDay : 0;
-  return { grossRevenue, cotisations, dailyRate, hourlyRate };
 }
 
 export default function TarifsPage() {

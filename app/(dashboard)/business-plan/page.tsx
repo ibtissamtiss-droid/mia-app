@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
 import { Download, Loader2, Sparkles } from "lucide-react";
+import { computeForecastTotals, type ForecastMonth } from "@/lib/forecast-calc";
 
 type Plan = {
   id: string;
@@ -18,8 +19,6 @@ type Plan = {
   market: string;
   strategy: string;
 };
-
-type ForecastMonth = { month: string; revenue: number; expenses: number };
 
 const SECTIONS: { key: keyof Omit<Plan, "id" | "projectName">; label: string }[] = [
   { key: "summary", label: "Résumé" },
@@ -97,13 +96,8 @@ export default function BusinessPlanPage() {
     setShowForm(true);
   };
 
-  const totals = forecast?.months.reduce(
-    (acc, m) => ({ revenue: acc.revenue + m.revenue, expenses: acc.expenses + m.expenses }),
-    { revenue: 0, expenses: 0 }
-  ) ?? { revenue: 0, expenses: 0 };
   const rate = forecast?.rate ?? 0;
-  const cotisations = totals.revenue * (rate / 100);
-  const net = totals.revenue - totals.expenses - cotisations;
+  const { cotisations, net, ...totals } = computeForecastTotals(forecast?.months ?? [], rate);
 
   return (
     <div className="mx-auto max-w-2xl space-y-6">

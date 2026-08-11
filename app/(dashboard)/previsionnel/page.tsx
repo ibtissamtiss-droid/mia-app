@@ -4,18 +4,12 @@ import { useEffect, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
+import { computeForecastTotals, monthLabel, type ForecastMonth } from "@/lib/forecast-calc";
 
-type MonthEntry = { month: string; revenue: number; expenses: number };
+type MonthEntry = ForecastMonth;
 
 function formatEuro(value: number) {
   return `${value.toLocaleString("fr-FR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €`;
-}
-
-function monthLabel(key: string) {
-  const [year, month] = key.split("-").map(Number);
-  const date = new Date(Date.UTC(year, month - 1, 1));
-  const label = date.toLocaleDateString("fr-FR", { month: "long", year: "numeric", timeZone: "UTC" });
-  return label.charAt(0).toUpperCase() + label.slice(1);
 }
 
 export default function PrevisionnelPage() {
@@ -49,15 +43,10 @@ export default function PrevisionnelPage() {
     if (!res.ok) toast.error("Échec de l'enregistrement");
   };
 
-  const totals = months?.reduce(
-    (acc, m) => ({
-      revenue: acc.revenue + m.revenue,
-      expenses: acc.expenses + m.expenses,
-    }),
-    { revenue: 0, expenses: 0 }
-  ) ?? { revenue: 0, expenses: 0 };
-  const totalCotisations = totals.revenue * (rate / 100);
-  const totalNet = totals.revenue - totals.expenses - totalCotisations;
+  const { cotisations: totalCotisations, net: totalNet, ...totals } = computeForecastTotals(
+    months ?? [],
+    rate
+  );
 
   return (
     <div className="mx-auto max-w-4xl space-y-6">

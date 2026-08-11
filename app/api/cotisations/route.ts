@@ -3,19 +3,7 @@ import { z } from "zod";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/db";
 import { documentTotals, type BillingDocument } from "@/types/models";
-
-function startOfMonth(d: Date) {
-  return new Date(d.getFullYear(), d.getMonth(), 1);
-}
-
-function startOfQuarter(d: Date) {
-  const quarterMonth = Math.floor(d.getMonth() / 3) * 3;
-  return new Date(d.getFullYear(), quarterMonth, 1);
-}
-
-function startOfYear(d: Date) {
-  return new Date(d.getFullYear(), 0, 1);
-}
+import { startOfMonth, startOfQuarter, startOfYear } from "@/lib/dates";
 
 async function revenueSince(userId: string, since: Date) {
   const invoices = await prisma.document.findMany({
