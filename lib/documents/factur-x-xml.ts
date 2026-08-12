@@ -61,11 +61,28 @@ function partyXml(party: FacturXParty, tag: "SellerTradeParty" | "BuyerTradePart
   const address = party.address
     ? `<ram:PostalTradeAddress><ram:LineOne>${escapeXml(party.address)}</ram:LineOne><ram:CountryID>FR</ram:CountryID></ram:PostalTradeAddress>`
     : "";
+  // BR-FR-12/13 (BT-34/BT-49): the French e-invoicing reform requires each
+  // party's electronic address (used to route the invoice) — for France
+  // this is the Peppol scheme "0225" with the SIREN. We only know our own
+  // seller's SIREN, not the buyer's, so this is seller-only for now.
+  const uri =
+    tag === "SellerTradeParty" && party.siren
+      ? `<ram:URIUniversalCommunication><ram:URIID schemeID="0225">${escapeXml(party.siren)}</ram:URIID></ram:URIUniversalCommunication>`
+      : "";
+  // BR-E-02 (EN16931): a VAT-exempt line requires the seller's VAT id and/or
+  // tax registration id. Franchise-en-base sellers have no VAT number, so we
+  // report the SIREN as the tax registration id (scheme "FC") instead.
+  const taxRegistration =
+    tag === "SellerTradeParty" && party.siren
+      ? `<ram:SpecifiedTaxRegistration><ram:ID schemeID="FC">${escapeXml(party.siren)}</ram:ID></ram:SpecifiedTaxRegistration>`
+      : "";
   return (
     `<ram:${tag}>` +
     `<ram:Name>${escapeXml(party.name)}</ram:Name>` +
     legalOrg +
     address +
+    uri +
+    taxRegistration +
     `</ram:${tag}>`
   );
 }
@@ -107,6 +124,14 @@ export function buildFacturXXml(invoice: FacturXInvoice): string {
     })
     .join("");
 
+  // BR-FR-05 (BT-22): French invoices must state the late-payment penalty
+  // rate, the flat recovery-cost indemnity, and the early-payment discount
+  // (or its absence) — the same mentions already shown on the visible PDF.
+  const legalNotesXml =
+    `<ram:IncludedNote><ram:Content>Une pénalité de retard est exigible : taux applicable 3 fois le taux d'intérêt légal.</ram:Content><ram:SubjectCode>PMD</ram:SubjectCode></ram:IncludedNote>` +
+    `<ram:IncludedNote><ram:Content>Indemnité forfaitaire pour frais de recouvrement de 40 € (art. L441-10 et D441-5 du Code de commerce).</ram:Content><ram:SubjectCode>PMT</ram:SubjectCode></ram:IncludedNote>` +
+    `<ram:IncludedNote><ram:Content>Pas d'escompte pour paiement anticipé.</ram:Content><ram:SubjectCode>AAB</ram:SubjectCode></ram:IncludedNote>`;
+
   const paymentTermsXml = invoice.dueDate
     ? `<ram:SpecifiedTradePaymentTerms><ram:DueDateDateTime><udt:DateTimeString format="102">${formatDate102(invoice.dueDate)}</udt:DateTimeString></ram:DueDateDateTime></ram:SpecifiedTradePaymentTerms>`
     : "";
@@ -125,6 +150,7 @@ export function buildFacturXXml(invoice: FacturXInvoice): string {
     `<ram:ID>${escapeXml(invoice.number)}</ram:ID>` +
     `<ram:TypeCode>380</ram:TypeCode>` +
     `<ram:IssueDateTime><udt:DateTimeString format="102">${formatDate102(invoice.issueDate)}</udt:DateTimeString></ram:IssueDateTime>` +
+    legalNotesXml +
     `</rsm:ExchangedDocument>` +
     `<rsm:SupplyChainTradeTransaction>` +
     lineItemsXml +

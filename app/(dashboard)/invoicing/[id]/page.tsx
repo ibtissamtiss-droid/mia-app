@@ -12,10 +12,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ArrowLeft, Download, FileCheck2, Trash2 } from "lucide-react";
+import { ArrowLeft, Download, FileCheck2, Trash2, ShieldCheck, Loader2 } from "lucide-react";
 import { PageSpinner } from "@/components/ui/page-spinner";
 import { toast } from "sonner";
 import { documentTotals, type BillingDocument, type DocumentStatus } from "@/types/models";
+
+type FacturXValidation = {
+  isValid: boolean;
+  format: string;
+  issues: { message: string; location?: string }[];
+};
 
 const STATUS_LABEL: Record<DocumentStatus, string> = {
   DRAFT: "Brouillon",
@@ -31,6 +37,8 @@ export default function DocumentDetailPage() {
   const router = useRouter();
   const [document, setDocument] = useState<BillingDocument | null>(null);
   const [loading, setLoading] = useState(true);
+  const [validating, setValidating] = useState(false);
+  const [validation, setValidation] = useState<FacturXValidation | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -74,6 +82,27 @@ export default function DocumentDetailPage() {
     a.download = `${document?.number ?? "facture"}-facturx.pdf`;
     a.click();
     URL.revokeObjectURL(url);
+  };
+
+  const checkFacturXCompliance = async () => {
+    setValidating(true);
+    setValidation(null);
+    try {
+      const res = await fetch(`/api/documents/${params.id}/facturx/validate`);
+      if (!res.ok) {
+        toast.error(await res.text());
+        return;
+      }
+      const report = (await res.json()) as FacturXValidation;
+      setValidation(report);
+      if (report.isValid) {
+        toast.success(`Facture conforme (format ${report.format})`);
+      } else {
+        toast.error(`${report.issues.length} problème(s) de conformité détecté(s)`);
+      }
+    } finally {
+      setValidating(false);
+    }
   };
 
   if (loading) {
@@ -132,11 +161,43 @@ export default function DocumentDetailPage() {
             Facture électronique (Factur-X)
           </Button>
         )}
+        {document.type === "INVOICE" && (
+          <Button variant="outline" size="sm" onClick={checkFacturXCompliance} disabled={validating}>
+            {validating ? <Loader2 className="h-4 w-4 animate-spin" /> : <ShieldCheck className="h-4 w-4" />}
+            Vérifier la conformité
+          </Button>
+        )}
         <Button variant="ghost" size="sm" onClick={remove}>
           <Trash2 className="h-4 w-4" />
           Supprimer
         </Button>
       </div>
+
+      {validation && (
+        <Card>
+          <CardContent className="space-y-2 py-4 text-sm">
+            <div className="flex items-center gap-2">
+              <Badge variant={validation.isValid ? "default" : "destructive"}>
+                {validation.isValid ? "Conforme" : "Non conforme"}
+              </Badge>
+              <span className="text-muted-foreground">
+                Validé par SUPER PDP (format {validation.format})
+              </span>
+            </div>
+            {!validation.isValid && validation.issues.length > 0 && (
+              <ul className="list-disc space-y-1 pl-5 text-muted-foreground">
+                {validation.issues.slice(0, 8).map((issue, i) => (
+                  <li key={i}>
+                    {issue.message}
+                    {issue.location && <span className="text-xs"> ({issue.location})</span>}
+                  </li>
+                ))}
+                {validation.issues.length > 8 && <li>… et {validation.issues.length - 8} autre(s)</li>}
+              </ul>
+            )}
+          </CardContent>
+        </Card>
+      )}
 
       <Card>
         <CardContent className="space-y-4 py-4">

@@ -98,6 +98,18 @@ describe("buildFacturXXml — content", () => {
     expect(xml).not.toContain("VATEX-FR-FRANCHISE");
   });
 
+  it("reports the seller's SIREN as a tax registration id (BR-E-02)", () => {
+    // Without this, an exempt line has no seller VAT/tax id at all and the
+    // invoice fails EN16931 rule BR-E-02, even though it's XSD-valid.
+    const xml = buildFacturXXml(baseInvoice);
+    expect(xml).toContain('<ram:SpecifiedTaxRegistration><ram:ID schemeID="FC">123456789</ram:ID></ram:SpecifiedTaxRegistration>');
+  });
+
+  it("omits the seller tax registration id when no SIREN is known", () => {
+    const xml = buildFacturXXml({ ...baseInvoice, seller: { name: "Test Entreprise", address: null, siren: null } });
+    expect(xml).not.toContain("SpecifiedTaxRegistration");
+  });
+
   it("computes totals correctly from line items", () => {
     const xml = buildFacturXXml({ ...baseInvoice, vatApplicable: true, taxRate: 20 });
     // subtotal = 2*500 + 1*300 = 1300, tax = 260, grand total = 1560
