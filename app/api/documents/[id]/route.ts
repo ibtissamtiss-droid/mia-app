@@ -34,13 +34,14 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
   }
 
-  const { items, clientEmail, dueDate, issueDate, ...rest } = parsed.data;
+  const { items, clientEmail, clientSiren, dueDate, issueDate, ...rest } = parsed.data;
 
   const document = await prisma.document.update({
     where: { id },
     data: {
       ...rest,
       ...(clientEmail !== undefined ? { clientEmail: clientEmail || null } : {}),
+      ...(clientSiren !== undefined ? { clientSiren: clientSiren || null } : {}),
       ...(issueDate !== undefined ? { issueDate: new Date(issueDate) } : {}),
       ...(dueDate !== undefined ? { dueDate: dueDate ? new Date(dueDate) : null } : {}),
       ...(items

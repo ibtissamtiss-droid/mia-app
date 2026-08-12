@@ -12,6 +12,11 @@ export const documentSchema = z.object({
   clientName: z.string().min(1, "Nom du client requis"),
   clientEmail: z.string().email().optional().or(z.literal("")),
   clientAddress: z.string().optional(),
+  clientSiren: z
+    .string()
+    .trim()
+    .regex(/^$|^\d{9}$/, "Le SIREN doit contenir 9 chiffres")
+    .optional(),
   issueDate: z.string().datetime().optional(),
   dueDate: z.string().datetime().optional().nullable(),
   notes: z.string().optional(),

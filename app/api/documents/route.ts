@@ -39,7 +39,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
   }
 
-  const { items, clientEmail, dueDate, issueDate, ...rest } = parsed.data;
+  const { items, clientEmail, clientSiren, dueDate, issueDate, ...rest } = parsed.data;
   const number = await generateDocumentNumber(session.user.id, rest.type);
 
   const document = await prisma.document.create({
@@ -47,6 +47,7 @@ export async function POST(req: Request) {
       ...rest,
       number,
       clientEmail: clientEmail || null,
+      clientSiren: clientSiren || null,
       issueDate: issueDate ? new Date(issueDate) : new Date(),
       dueDate: dueDate ? new Date(dueDate) : null,
       userId: session.user.id,

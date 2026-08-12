@@ -20,7 +20,8 @@ import { documentTotals, type BillingDocument, type DocumentStatus } from "@/typ
 type FacturXValidation = {
   isValid: boolean;
   format: string;
-  issues: { message: string; location?: string }[];
+  failures: { message: string; location?: string }[];
+  warnings: { message: string; location?: string }[];
 };
 
 const STATUS_LABEL: Record<DocumentStatus, string> = {
@@ -96,9 +97,13 @@ export default function DocumentDetailPage() {
       const report = (await res.json()) as FacturXValidation;
       setValidation(report);
       if (report.isValid) {
-        toast.success(`Facture conforme (format ${report.format})`);
+        toast.success(
+          report.warnings.length > 0
+            ? `Facture conforme (${report.warnings.length} avertissement mineur)`
+            : "Facture conforme"
+        );
       } else {
-        toast.error(`${report.issues.length} problème(s) de conformité détecté(s)`);
+        toast.error(`${report.failures.length} problème(s) de conformité détecté(s)`);
       }
     } finally {
       setValidating(false);
@@ -184,16 +189,28 @@ export default function DocumentDetailPage() {
                 Validé par SUPER PDP (format {validation.format})
               </span>
             </div>
-            {!validation.isValid && validation.issues.length > 0 && (
+            {validation.failures.length > 0 && (
               <ul className="list-disc space-y-1 pl-5 text-muted-foreground">
-                {validation.issues.slice(0, 8).map((issue, i) => (
+                {validation.failures.slice(0, 8).map((issue, i) => (
                   <li key={i}>
                     {issue.message}
                     {issue.location && <span className="text-xs"> ({issue.location})</span>}
                   </li>
                 ))}
-                {validation.issues.length > 8 && <li>… et {validation.issues.length - 8} autre(s)</li>}
+                {validation.failures.length > 8 && <li>… et {validation.failures.length - 8} autre(s)</li>}
               </ul>
+            )}
+            {validation.warnings.length > 0 && (
+              <details className="text-muted-foreground">
+                <summary className="cursor-pointer text-xs">
+                  {validation.warnings.length} avertissement(s) mineur(s)
+                </summary>
+                <ul className="list-disc space-y-1 pl-5 pt-1">
+                  {validation.warnings.slice(0, 8).map((issue, i) => (
+                    <li key={i}>{issue.message}</li>
+                  ))}
+                </ul>
+              </details>
             )}
           </CardContent>
         </Card>
@@ -207,6 +224,9 @@ export default function DocumentDetailPage() {
               <p>{document.clientName}</p>
               {document.clientEmail && <p>{document.clientEmail}</p>}
               {document.clientAddress && <p>{document.clientAddress}</p>}
+              {document.clientSiren && (
+                <p className="text-xs text-muted-foreground">SIREN {document.clientSiren}</p>
+              )}
             </div>
             <div>
               <p className="text-xs text-muted-foreground">Date d&apos;émission</p>

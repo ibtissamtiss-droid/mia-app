@@ -63,12 +63,11 @@ function partyXml(party: FacturXParty, tag: "SellerTradeParty" | "BuyerTradePart
     : "";
   // BR-FR-12/13 (BT-34/BT-49): the French e-invoicing reform requires each
   // party's electronic address (used to route the invoice) — for France
-  // this is the Peppol scheme "0225" with the SIREN. We only know our own
-  // seller's SIREN, not the buyer's, so this is seller-only for now.
-  const uri =
-    tag === "SellerTradeParty" && party.siren
-      ? `<ram:URIUniversalCommunication><ram:URIID schemeID="0225">${escapeXml(party.siren)}</ram:URIID></ram:URIUniversalCommunication>`
-      : "";
+  // this is the Peppol scheme "0225" with the SIREN. Applies to both
+  // parties whenever we know their SIREN.
+  const uri = party.siren
+    ? `<ram:URIUniversalCommunication><ram:URIID schemeID="0225">${escapeXml(party.siren)}</ram:URIID></ram:URIUniversalCommunication>`
+    : "";
   // BR-E-02 (EN16931): a VAT-exempt line requires the seller's VAT id and/or
   // tax registration id. Franchise-en-base sellers have no VAT number, so we
   // report the SIREN as the tax registration id (scheme "FC") instead.
@@ -144,6 +143,11 @@ export function buildFacturXXml(invoice: FacturXInvoice): string {
     `xmlns:udt="urn:un:unece:uncefact:data:standard:UnqualifiedDataType:100" ` +
     `xmlns:qdt="urn:un:unece:uncefact:data:standard:QualifiedDataType:100">` +
     `<rsm:ExchangedDocumentContext>` +
+    // BR-FR-08 (BT-23): "cadre de facturation" — S1 = prestation de
+    // services, the standard case for MIA's freelance/service invoices.
+    // We don't yet distinguish goods, mixed, or already-paid (deposit)
+    // invoices, so this is a fixed default rather than computed per line.
+    `<ram:BusinessProcessSpecifiedDocumentContextParameter><ram:ID>S1</ram:ID></ram:BusinessProcessSpecifiedDocumentContextParameter>` +
     `<ram:GuidelineSpecifiedDocumentContextParameter><ram:ID>urn:cen.eu:en16931:2017</ram:ID></ram:GuidelineSpecifiedDocumentContextParameter>` +
     `</rsm:ExchangedDocumentContext>` +
     `<rsm:ExchangedDocument>` +

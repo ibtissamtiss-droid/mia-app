@@ -30,6 +30,7 @@ export function DocumentForm({
   const [clientName, setClientName] = useState("");
   const [clientEmail, setClientEmail] = useState("");
   const [clientAddress, setClientAddress] = useState("");
+  const [clientSiren, setClientSiren] = useState("");
   const [dueDate, setDueDate] = useState("");
   const [taxRate, setTaxRate] = useState("0");
   const [notes, setNotes] = useState("");
@@ -40,6 +41,7 @@ export function DocumentForm({
     setClientName("");
     setClientEmail("");
     setClientAddress("");
+    setClientSiren("");
     setDueDate("");
     setTaxRate("0");
     setNotes("");
@@ -72,6 +74,7 @@ export function DocumentForm({
         clientName,
         clientEmail: clientEmail || undefined,
         clientAddress: clientAddress || undefined,
+        clientSiren: clientSiren || undefined,
         dueDate: dueDate ? new Date(dueDate).toISOString() : undefined,
         taxRate: parseFloat(taxRate) || 0,
         notes: notes || undefined,
@@ -134,6 +137,19 @@ export function DocumentForm({
               value={clientAddress}
               onChange={(e) => setClientAddress(e.target.value)}
             />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="clientSiren">SIREN client (optionnel)</Label>
+            <Input
+              id="clientSiren"
+              value={clientSiren}
+              onChange={(e) => setClientSiren(e.target.value)}
+              placeholder="123456789"
+              maxLength={9}
+            />
+            <p className="text-xs text-muted-foreground">
+              Requis pour l&apos;adresse de facturation électronique du client (Factur-X).
+            </p>
           </div>
 
           <div className="space-y-2">

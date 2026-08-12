@@ -110,6 +110,18 @@ describe("buildFacturXXml — content", () => {
     expect(xml).not.toContain("SpecifiedTaxRegistration");
   });
 
+  it("declares the S1 (prestation de services) processing rule (BR-FR-08)", () => {
+    const xml = buildFacturXXml(baseInvoice);
+    expect(xml).toContain(
+      "<ram:BusinessProcessSpecifiedDocumentContextParameter><ram:ID>S1</ram:ID></ram:BusinessProcessSpecifiedDocumentContextParameter>"
+    );
+  });
+
+  it("declares the buyer's electronic address when their SIREN is known (BR-FR-12)", () => {
+    const xml = buildFacturXXml({ ...baseInvoice, buyer: { ...baseInvoice.buyer, siren: "987654321" } });
+    expect(xml).toContain('<ram:URIUniversalCommunication><ram:URIID schemeID="0225">987654321</ram:URIID></ram:URIUniversalCommunication>');
+  });
+
   it("computes totals correctly from line items", () => {
     const xml = buildFacturXXml({ ...baseInvoice, vatApplicable: true, taxRate: 20 });
     // subtotal = 2*500 + 1*300 = 1300, tax = 260, grand total = 1560

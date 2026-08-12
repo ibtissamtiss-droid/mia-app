@@ -63,6 +63,7 @@ export type BillingDocument = {
   clientName: string;
   clientEmail: string | null;
   clientAddress: string | null;
+  clientSiren: string | null;
   issueDate: string;
   dueDate: string | null;
   notes: string | null;

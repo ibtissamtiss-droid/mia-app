@@ -199,6 +199,7 @@ model Document {
   clientName    String
   clientEmail   String?
   clientAddress String?
+  clientSiren   String?
   issueDate     DateTime       @default(now())
   dueDate       DateTime?
   notes         String?

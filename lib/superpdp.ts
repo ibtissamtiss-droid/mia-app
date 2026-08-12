@@ -9,17 +9,21 @@ const ENDPOINT = process.env.SUPERPDP_ENDPOINT || "https://api.superpdp.tech";
 
 export type FacturXValidationIssue = { message: string; location?: string };
 export type FacturXValidationResult = {
+  // Computed from `failures` only. SUPER PDP's own `is_valid` flag turns
+  // false on any warning too (e.g. stylistic Peppol rules), which would
+  // make a genuinely compliant invoice look broken.
   isValid: boolean;
   format: string;
-  issues: FacturXValidationIssue[];
+  failures: FacturXValidationIssue[];
+  warnings: FacturXValidationIssue[];
 };
 
 type ValidationReportResponse = {
   data: Array<{
-    is_valid: boolean;
     format: string;
     subreports: Array<{
       failures: Array<{ message: string; location?: string }>;
+      messages: Array<{ message: string; location?: string }>;
     }>;
   }>;
 };
@@ -38,9 +42,12 @@ export async function validateFacturX(pdfBytes: Uint8Array, fileName = "facture.
 
   const body = (await res.json()) as ValidationReportResponse;
   const report = body.data[0];
-  const issues = report.subreports.flatMap((subreport) =>
-    subreport.failures.map((failure) => ({ message: failure.message, location: failure.location }))
+  const failures = report.subreports.flatMap((subreport) =>
+    subreport.failures.map((f) => ({ message: f.message, location: f.location }))
+  );
+  const warnings = report.subreports.flatMap((subreport) =>
+    subreport.messages.map((m) => ({ message: m.message, location: m.location }))
   );
 
-  return { isValid: report.is_valid, format: report.format, issues };
+  return { isValid: failures.length === 0, format: report.format, failures, warnings };
 }

@@ -58,7 +58,7 @@ export async function buildFacturXPdf(documentId: string, userId: string): Promi
       unitPrice: item.unitPrice,
     })),
     seller: { name: sellerName, address: user.companyAddress, siren: user.siren },
-    buyer: { name: document.clientName, address: document.clientAddress },
+    buyer: { name: document.clientName, address: document.clientAddress, siren: document.clientSiren },
   });
 
   const pdfDoc = await PDFDocument.load(visualPdf);
