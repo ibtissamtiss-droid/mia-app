@@ -131,7 +131,11 @@ model BankTransaction {
   currencyCode        String
   createdAt           DateTime    @default(now())
 
+  matchedDocumentId String?
+  matchedDocument   Document? @relation(fields: [matchedDocumentId], references: [id], onDelete: SetNull)
+
   @@index([bankAccountId])
+  @@index([matchedDocumentId])
 }
 
 model PasswordResetToken {
@@ -247,7 +251,8 @@ model Document {
   superpdpSentAt      DateTime?
   superpdpCompanyName String?
 
-  items         DocumentItem[]
+  items             DocumentItem[]
+  matchedTransactions BankTransaction[]
 
   @@index([userId])
 }

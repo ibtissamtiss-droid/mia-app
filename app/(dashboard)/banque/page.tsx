@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PageSpinner } from "@/components/ui/page-spinner";
 import { toast } from "sonner";
-import { Landmark, RefreshCw, Loader2 } from "lucide-react";
+import { Landmark, RefreshCw, Loader2, CheckCircle2 } from "lucide-react";
 
 type BankAccount = {
   id: string;
@@ -16,6 +16,8 @@ type BankAccount = {
   currencyCode: string;
 };
 
+type MatchedInvoice = { id: string; number: string; clientName: string };
+
 type BankTransaction = {
   id: string;
   bankAccountId: string;
@@ -23,6 +25,8 @@ type BankTransaction = {
   amount: number;
   date: string;
   currencyCode: string;
+  matchedDocument: MatchedInvoice | null;
+  suggestedMatch: MatchedInvoice | null;
 };
 
 type AccountsResponse = {
@@ -39,6 +43,7 @@ export default function BanquePage() {
   const [data, setData] = useState<AccountsResponse | null>(null);
   const [connecting, setConnecting] = useState(false);
   const [syncing, setSyncing] = useState(false);
+  const [matchingId, setMatchingId] = useState<string | null>(null);
 
   const load = () => {
     fetch("/api/bank/accounts")
@@ -78,6 +83,24 @@ export default function BanquePage() {
         load();
       })
       .finally(() => setSyncing(false));
+  };
+
+  const confirmMatch = (transactionId: string, documentId: string) => {
+    setMatchingId(transactionId);
+    fetch("/api/bank/match", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ transactionId, documentId }),
+    })
+      .then(async (res) => {
+        if (!res.ok) {
+          toast.error(await res.text());
+          return;
+        }
+        toast.success("Facture marquée comme payée");
+        load();
+      })
+      .finally(() => setMatchingId(null));
   };
 
   if (!data) {
@@ -150,15 +173,43 @@ export default function BanquePage() {
               <CardHeader>
                 <CardTitle className="text-base font-medium">Transactions récentes</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-1">
+              <CardContent className="space-y-2">
                 {data.transactions.map((tx) => (
-                  <div key={tx.id} className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">
-                      {new Date(tx.date).toLocaleDateString("fr-FR")} — {tx.description}
-                    </span>
-                    <span className={tx.amount < 0 ? "text-muted-foreground" : "font-medium"}>
-                      {formatEuro(tx.amount)}
-                    </span>
+                  <div key={tx.id} className="space-y-1 border-b pb-2 last:border-0 last:pb-0">
+                    <div className="flex justify-between text-sm">
+                      <span className="text-muted-foreground">
+                        {new Date(tx.date).toLocaleDateString("fr-FR")} — {tx.description}
+                      </span>
+                      <span className={tx.amount < 0 ? "text-muted-foreground" : "font-medium"}>
+                        {formatEuro(tx.amount)}
+                      </span>
+                    </div>
+                    {tx.matchedDocument && (
+                      <p className="flex items-center gap-1 text-xs text-muted-foreground">
+                        <CheckCircle2 className="h-3 w-3" />
+                        Rapprochée de {tx.matchedDocument.number} ({tx.matchedDocument.clientName})
+                      </p>
+                    )}
+                    {tx.suggestedMatch && (
+                      <div className="flex items-center justify-between gap-2 rounded-md bg-muted p-2 text-xs">
+                        <span>
+                          Correspond à {tx.suggestedMatch.number} ({tx.suggestedMatch.clientName})
+                        </span>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="h-6 px-2 text-xs"
+                          disabled={matchingId === tx.id}
+                          onClick={() => confirmMatch(tx.id, tx.suggestedMatch!.id)}
+                        >
+                          {matchingId === tx.id ? (
+                            <Loader2 className="h-3 w-3 animate-spin" />
+                          ) : (
+                            "Marquer payée"
+                          )}
+                        </Button>
+                      </div>
+                    )}
                   </div>
                 ))}
               </CardContent>
