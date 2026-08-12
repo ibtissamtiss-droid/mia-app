@@ -5,15 +5,39 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PageSpinner } from "@/components/ui/page-spinner";
 import { toast } from "sonner";
 import { effectiveCotisationRate } from "@/lib/forecast-calc";
 
+type UrssafPeriod = "MONTHLY" | "QUARTERLY";
+
+type Declaration = {
+  period: UrssafPeriod;
+  declarationDay: number | null;
+  periodLabel: string;
+  revenue: number;
+  amountDue: number;
+  nextDeadline: string | null;
+};
+
 type Summary = {
   rate: number;
   acreEligible: boolean;
   revenue: { month: number; quarter: number; year: number };
+  declaration: Declaration;
+};
+
+const URSSAF_PERIOD_LABEL: Record<UrssafPeriod, string> = {
+  MONTHLY: "Mensuelle",
+  QUARTERLY: "Trimestrielle",
 };
 
 const PERIODS: { key: keyof Summary["revenue"]; label: string }[] = [
@@ -32,20 +56,22 @@ export default function CotisationsPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [savingAcre, setSavingAcre] = useState(false);
+  const [savingDeclaration, setSavingDeclaration] = useState(false);
+  const [declarationDayInput, setDeclarationDayInput] = useState("");
 
-  useEffect(() => {
-    let cancelled = false;
+  const load = () => {
     fetch("/api/cotisations")
       .then((res) => res.json())
       .then((data: Summary) => {
-        if (cancelled) return;
         setSummary(data);
         setRateInput(String(data.rate || ""));
+        setDeclarationDayInput(data.declaration.declarationDay ? String(data.declaration.declarationDay) : "");
         setLoading(false);
       });
-    return () => {
-      cancelled = true;
-    };
+  };
+
+  useEffect(() => {
+    load();
   }, []);
 
   const saveRate = async (e: React.FormEvent) => {
@@ -84,6 +110,42 @@ export default function CotisationsPage() {
     } else {
       toast.error("Échec de la mise à jour");
     }
+  };
+
+  const saveDeclarationPeriod = async (period: UrssafPeriod) => {
+    const res = await fetch("/api/cotisations", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ urssafPeriod: period }),
+    });
+    if (res.ok) {
+      load();
+      toast.success("Périodicité mise à jour");
+    } else {
+      toast.error("Échec de la mise à jour");
+    }
+  };
+
+  const saveDeclarationDay = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const day = declarationDayInput ? parseInt(declarationDayInput, 10) : null;
+    if (day !== null && (isNaN(day) || day < 1 || day > 28)) {
+      toast.error("Entrez un jour entre 1 et 28");
+      return;
+    }
+    setSavingDeclaration(true);
+    const res = await fetch("/api/cotisations", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ urssafDeclarationDay: day }),
+    });
+    if (res.ok) {
+      load();
+      toast.success("Jour d'échéance mis à jour");
+    } else {
+      toast.error("Échec de la mise à jour");
+    }
+    setSavingDeclaration(false);
   };
 
   const effectiveRate = summary ? effectiveCotisationRate(summary.rate, summary.acreEligible) : 0;
@@ -149,6 +211,82 @@ export default function CotisationsPage() {
                 </span>
               </span>
             </label>
+          </CardContent>
+        </Card>
+      )}
+
+      {!loading && summary && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">Déclaration URSSAF</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex items-end gap-4">
+              <div className="space-y-2">
+                <Label>Périodicité</Label>
+                <Select
+                  value={summary.declaration.period}
+                  onValueChange={(v) => saveDeclarationPeriod(v as UrssafPeriod)}
+                >
+                  <SelectTrigger className="w-40">
+                    <SelectValue>
+                      {(value: UrssafPeriod) => URSSAF_PERIOD_LABEL[value]}
+                    </SelectValue>
+                  </SelectTrigger>
+                  <SelectContent>
+                    {Object.entries(URSSAF_PERIOD_LABEL).map(([value, label]) => (
+                      <SelectItem key={value} value={value}>
+                        {label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <form onSubmit={saveDeclarationDay} className="flex items-end gap-2">
+                <div className="space-y-2">
+                  <Label htmlFor="declarationDay">Jour d&apos;échéance</Label>
+                  <Input
+                    id="declarationDay"
+                    type="number"
+                    min="1"
+                    max="28"
+                    className="w-24"
+                    placeholder="Ex: 20"
+                    value={declarationDayInput}
+                    onChange={(e) => setDeclarationDayInput(e.target.value)}
+                  />
+                </div>
+                <Button type="submit" size="sm" variant="outline" disabled={savingDeclaration}>
+                  {savingDeclaration ? "..." : "Enregistrer"}
+                </Button>
+              </form>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Le jour d&apos;échéance est celui indiqué sur votre compte URSSAF (entre 1 et 28).
+              MIA ne le devine pas, il faut le renseigner vous-même.
+            </p>
+
+            <div className="rounded-md border bg-muted/40 p-3">
+              <p className="text-sm font-medium">Déclaration {summary.declaration.periodLabel}</p>
+              <div className="mt-2 grid gap-3 sm:grid-cols-3">
+                <div>
+                  <p className="text-xs text-muted-foreground">CA encaissé sur la période</p>
+                  <p className="font-semibold">{formatEuro(summary.declaration.revenue)}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">Montant à déclarer</p>
+                  <p className="font-semibold text-primary">{formatEuro(summary.declaration.amountDue)}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">Prochaine échéance</p>
+                  <p className="font-semibold">
+                    {summary.declaration.nextDeadline
+                      ? new Date(summary.declaration.nextDeadline).toLocaleDateString("fr-FR")
+                      : "Non configurée"}
+                  </p>
+                </div>
+              </div>
+            </div>
           </CardContent>
         </Card>
       )}

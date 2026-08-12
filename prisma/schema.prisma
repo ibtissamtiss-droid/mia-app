@@ -30,6 +30,11 @@ enum ChatRole {
   ASSISTANT
 }
 
+enum UrssafPeriod {
+  MONTHLY
+  QUARTERLY
+}
+
 enum DocumentType {
   QUOTE
   INVOICE
@@ -68,6 +73,8 @@ model User {
   companyAddress String?
   siren          String?
   vatApplicable  Boolean   @default(false)
+  urssafPeriod         UrssafPeriod @default(MONTHLY)
+  urssafDeclarationDay Int?
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 

@@ -2,6 +2,8 @@ import { prisma } from "@/lib/db";
 import { documentTotals, type BillingDocument } from "@/types/models";
 import { computeRates } from "@/lib/pricing";
 import { getForecastSummary } from "@/lib/forecast";
+import { effectiveCotisationRate } from "@/lib/forecast-calc";
+import { declarationPeriodRange, periodLabel, nextDeclarationDeadline } from "@/lib/urssaf";
 
 export async function buildUserContext(userId: string): Promise<string> {
   const now = new Date();
@@ -10,7 +12,14 @@ export async function buildUserContext(userId: string): Promise<string> {
     await Promise.all([
       prisma.user.findUnique({
         where: { id: userId },
-        select: { name: true, companyName: true, cotisationRate: true, acreEligible: true },
+        select: {
+          name: true,
+          companyName: true,
+          cotisationRate: true,
+          acreEligible: true,
+          urssafPeriod: true,
+          urssafDeclarationDay: true,
+        },
       }),
       prisma.task.findMany({
         where: { userId, status: { not: "DONE" } },
@@ -89,6 +98,30 @@ export async function buildUserContext(userId: string): Promise<string> {
   lines.push(
     `Devis: ${quotes.length}. Factures: ${invoices.length} (${unpaidInvoices.length} impayée(s) pour ${unpaidTotal.toFixed(2)} €, ${paidTotal.toFixed(2)} € encaissés).`
   );
+
+  {
+    const declarationRange = declarationPeriodRange(user?.urssafPeriod ?? "MONTHLY", now);
+    const declarationRevenue = documents
+      .filter(
+        (d) =>
+          d.type === "INVOICE" &&
+          d.status === "PAID" &&
+          d.issueDate >= declarationRange.start &&
+          d.issueDate < declarationRange.end
+      )
+      .reduce((sum, d) => sum + documentTotals(d as unknown as BillingDocument).total, 0);
+    const declarationAmountDue =
+      declarationRevenue * (effectiveCotisationRate(user?.cotisationRate ?? 0, user?.acreEligible ?? false) / 100);
+    if (user?.urssafDeclarationDay) {
+      lines.push(
+        `Prochaine déclaration URSSAF (${periodLabel(user.urssafPeriod, declarationRange)}): échéance le ` +
+          `${nextDeclarationDeadline(user.urssafDeclarationDay, now).toLocaleDateString("fr-FR")}, montant estimé ` +
+          `à déclarer ${declarationAmountDue.toFixed(2)} €.`
+      );
+    } else {
+      lines.push("Jour d'échéance de déclaration URSSAF non configuré par l'utilisateur.");
+    }
+  }
 
   if (pricingSettings) {
     const rates = computeRates(pricingSettings, user?.cotisationRate ?? 0);

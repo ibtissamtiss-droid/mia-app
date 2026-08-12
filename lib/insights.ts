@@ -1,8 +1,21 @@
 import { prisma } from "@/lib/db";
 import { documentTotals, type BillingDocument } from "@/types/models";
 import { getForecastSummary } from "@/lib/forecast";
+import { effectiveCotisationRate } from "@/lib/forecast-calc";
+import { declarationPeriodRange, periodLabel, nextDeclarationDeadline } from "@/lib/urssaf";
 
 const STALE_PROSPECT_DAYS = 14;
+
+export async function revenueBetween(userId: string, start: Date, end: Date) {
+  const invoices = await prisma.document.findMany({
+    where: { userId, type: "INVOICE", status: "PAID", issueDate: { gte: start, lt: end } },
+    include: { items: true },
+  });
+  return invoices.reduce(
+    (sum, doc) => sum + documentTotals(doc as unknown as BillingDocument).total,
+    0
+  );
+}
 
 function daysAgo(date: Date, now: Date) {
   return Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24));
@@ -25,7 +38,10 @@ export async function getBusinessSnapshot(userId: string) {
     prisma.prospect.findMany({ where: { userId } }),
     prisma.task.findMany({ where: { userId } }),
     getForecastSummary(userId),
-    prisma.user.findUnique({ where: { id: userId }, select: { cotisationRate: true } }),
+    prisma.user.findUnique({
+      where: { id: userId },
+      select: { cotisationRate: true, acreEligible: true, urssafPeriod: true, urssafDeclarationDay: true },
+    }),
     prisma.businessPlan.findUnique({ where: { userId } }),
   ]);
 
@@ -55,6 +71,17 @@ export async function getBusinessSnapshot(userId: string) {
 
   const monthsWithNoRevenuePlanned = forecast.months.filter((m) => m.revenue === 0).length;
 
+  const declarationRange = declarationPeriodRange(user?.urssafPeriod ?? "MONTHLY", now);
+  const declarationRevenue = revenueInRange(declarationRange.start, declarationRange.end);
+  const declarationAmountDue =
+    declarationRevenue *
+    (effectiveCotisationRate(user?.cotisationRate ?? 0, user?.acreEligible ?? false) / 100);
+  const declarationLine = user?.urssafDeclarationDay
+    ? `Prochaine déclaration URSSAF (${periodLabel(user.urssafPeriod, declarationRange)}) : échéance le ` +
+      `${nextDeclarationDeadline(user.urssafDeclarationDay, now).toLocaleDateString("fr-FR")}, montant estimé à ` +
+      `déclarer ${declarationAmountDue.toFixed(2)}€`
+    : "Jour d'échéance de déclaration URSSAF non configuré";
+
   const lines = [
     `Factures en retard de paiement: ${overdueInvoices.length}`,
     `Chiffre d'affaires encaissé ce mois-ci: ${revenueThisMonth.toFixed(2)}€ (mois précédent: ${revenueLastMonth.toFixed(2)}€)`,
@@ -64,6 +91,7 @@ export async function getBusinessSnapshot(userId: string) {
     `Taux de cotisation configuré: ${user?.cotisationRate ? `${user.cotisationRate}%` : "non configuré"}`,
     `Mois sans revenu prévu dans le prévisionnel (sur 12): ${monthsWithNoRevenuePlanned}`,
     `Business plan créé: ${businessPlan ? "oui" : "non"}`,
+    declarationLine,
   ];
 
   return { summary: lines.join("\n") };
