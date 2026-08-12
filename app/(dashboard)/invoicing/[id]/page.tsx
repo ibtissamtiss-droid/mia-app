@@ -12,8 +12,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ArrowLeft, Download, Trash2 } from "lucide-react";
+import { ArrowLeft, Download, FileCheck2, Trash2 } from "lucide-react";
 import { PageSpinner } from "@/components/ui/page-spinner";
+import { toast } from "sonner";
 import { documentTotals, type BillingDocument, type DocumentStatus } from "@/types/models";
 
 const STATUS_LABEL: Record<DocumentStatus, string> = {
@@ -58,6 +59,21 @@ export default function DocumentDetailPage() {
   const remove = async () => {
     await fetch(`/api/documents/${params.id}`, { method: "DELETE" });
     router.push("/invoicing");
+  };
+
+  const downloadFacturX = async () => {
+    const res = await fetch(`/api/documents/${params.id}/facturx`);
+    if (!res.ok) {
+      toast.error(await res.text());
+      return;
+    }
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    const a = window.document.createElement("a");
+    a.href = url;
+    a.download = `${document?.number ?? "facture"}-facturx.pdf`;
+    a.click();
+    URL.revokeObjectURL(url);
   };
 
   if (loading) {
@@ -110,6 +126,12 @@ export default function DocumentDetailPage() {
             Télécharger le PDF
           </Button>
         </a>
+        {document.type === "INVOICE" && (
+          <Button variant="outline" size="sm" onClick={downloadFacturX}>
+            <FileCheck2 className="h-4 w-4" />
+            Facture électronique (Factur-X)
+          </Button>
+        )}
         <Button variant="ghost" size="sm" onClick={remove}>
           <Trash2 className="h-4 w-4" />
           Supprimer
