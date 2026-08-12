@@ -75,6 +75,8 @@ model User {
   vatApplicable  Boolean   @default(false)
   urssafPeriod         UrssafPeriod @default(MONTHLY)
   urssafDeclarationDay Int?
+  bridgeUserUuid    String?
+  bridgeLastSyncAt  DateTime?
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
@@ -96,6 +98,40 @@ model User {
   monthlyCharges   MonthlyCharge[]
   productMargins   ProductMargin[]
   dailyBriefings   DailyBriefing[]
+  bankAccounts     BankAccount[]
+}
+
+model BankAccount {
+  id              String   @id @default(cuid())
+  userId          String
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  bridgeAccountId String   @unique
+  bridgeItemId    String
+  name            String
+  type            String
+  iban            String?
+  balance         Float
+  currencyCode    String
+  updatedAt       DateTime @updatedAt
+  createdAt       DateTime @default(now())
+
+  transactions BankTransaction[]
+
+  @@index([userId])
+}
+
+model BankTransaction {
+  id                  String      @id @default(cuid())
+  bankAccountId       String
+  bankAccount         BankAccount @relation(fields: [bankAccountId], references: [id], onDelete: Cascade)
+  bridgeTransactionId String      @unique
+  description         String
+  amount              Float
+  date                DateTime
+  currencyCode        String
+  createdAt           DateTime    @default(now())
+
+  @@index([bankAccountId])
 }
 
 model PasswordResetToken {

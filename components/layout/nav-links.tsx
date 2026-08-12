@@ -18,6 +18,7 @@ import {
   Users,
   Lightbulb,
   Calculator,
+  Landmark,
 } from "lucide-react";
 
 const NAV_ITEMS = [
@@ -27,6 +28,7 @@ const NAV_ITEMS = [
   { href: "/prospects", label: "Recherche de clients", icon: Users },
   { href: "/notes", label: "Notes", icon: NotebookText },
   { href: "/invoicing", label: "Devis & Factures", icon: Receipt },
+  { href: "/banque", label: "Banque", icon: Landmark },
   { href: "/plan-action", label: "Plan d'action", icon: Target },
   { href: "/recommandations", label: "Recommandations", icon: Lightbulb },
   { href: "/cotisations", label: "Cotisations", icon: PiggyBank },
