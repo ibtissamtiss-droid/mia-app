@@ -12,7 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ArrowLeft, Download, FileCheck2, Trash2, ShieldCheck, Loader2 } from "lucide-react";
+import { ArrowLeft, Download, FileCheck2, Trash2, ShieldCheck, Loader2, Send } from "lucide-react";
 import { PageSpinner } from "@/components/ui/page-spinner";
 import { toast } from "sonner";
 import { documentTotals, type BillingDocument, type DocumentStatus } from "@/types/models";
@@ -40,6 +40,7 @@ export default function DocumentDetailPage() {
   const [loading, setLoading] = useState(true);
   const [validating, setValidating] = useState(false);
   const [validation, setValidation] = useState<FacturXValidation | null>(null);
+  const [sending, setSending] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -110,6 +111,42 @@ export default function DocumentDetailPage() {
     }
   };
 
+  const sendViaSuperPdp = async () => {
+    const confirmed = window.confirm(
+      "Envoyer cette facture via l'API SUPER PDP ?\n\n" +
+        "Attention : seuls des identifiants bac à sable (entreprise fictive de test) sont configurés pour l'instant. " +
+        "Cet envoi valide le circuit technique mais n'atteint aucun vrai client — ce n'est pas un envoi réel."
+    );
+    if (!confirmed) return;
+
+    setSending(true);
+    try {
+      const res = await fetch(`/api/documents/${params.id}/facturx/send`, { method: "POST" });
+      const body = await res.json().catch(() => null);
+      if (!res.ok) {
+        if (res.status === 422 && body?.failures) {
+          toast.error(`Facture non conforme : ${body.failures[0]?.message ?? body.error}`);
+        } else {
+          toast.error(body?.error || (await res.text().catch(() => "Erreur d'envoi")));
+        }
+        return;
+      }
+      setDocument((prev) =>
+        prev
+          ? {
+              ...prev,
+              superpdpInvoiceId: body.invoiceId,
+              superpdpSentAt: body.sentAt,
+              superpdpCompanyName: body.companyName,
+            }
+          : prev
+      );
+      toast.success(`Envoyée (bac à sable, en tant que ${body.companyName}) — #${body.invoiceId}`);
+    } finally {
+      setSending(false);
+    }
+  };
+
   if (loading) {
     return <PageSpinner />;
   }
@@ -172,11 +209,36 @@ export default function DocumentDetailPage() {
             Vérifier la conformité
           </Button>
         )}
+        {document.type === "INVOICE" && (
+          <Button variant="outline" size="sm" onClick={sendViaSuperPdp} disabled={sending}>
+            {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+            Envoyer via SUPER PDP (bac à sable)
+          </Button>
+        )}
         <Button variant="ghost" size="sm" onClick={remove}>
           <Trash2 className="h-4 w-4" />
           Supprimer
         </Button>
       </div>
+
+      {document.superpdpInvoiceId && (
+        <Card>
+          <CardContent className="space-y-1 py-4 text-sm">
+            <div className="flex items-center gap-2">
+              <Badge variant="secondary">Envoyée (bac à sable)</Badge>
+              <span className="text-muted-foreground">
+                SUPER PDP #{document.superpdpInvoiceId}
+                {document.superpdpSentAt &&
+                  ` · ${new Date(document.superpdpSentAt).toLocaleString("fr-FR")}`}
+              </span>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Envoyée en tant que « {document.superpdpCompanyName} » (entreprise de test) — pas un envoi réel à
+              un vrai client.
+            </p>
+          </CardContent>
+        </Card>
+      )}
 
       {validation && (
         <Card>

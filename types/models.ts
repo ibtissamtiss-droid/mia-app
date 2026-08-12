@@ -71,6 +71,9 @@ export type BillingDocument = {
   createdAt: string;
   updatedAt: string;
   items: DocumentItem[];
+  superpdpInvoiceId: string | null;
+  superpdpSentAt: string | null;
+  superpdpCompanyName: string | null;
 };
 
 export type ProspectStatus = "TO_CONTACT" | "CONTACTED" | "IN_DISCUSSION" | "WON" | "LOST";
