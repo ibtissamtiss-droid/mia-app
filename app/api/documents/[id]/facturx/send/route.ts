@@ -2,10 +2,14 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/db";
 import { buildFacturXPdf } from "@/lib/documents/facturx-pdf";
 import { validateFacturX, submitInvoice } from "@/lib/superpdp";
+import { isPaidUser } from "@/lib/plan";
 
 export async function POST(_req: Request, { params }: { params: Promise<{ id: string }> }) {
   const session = await auth();
   if (!session?.user) return new Response("Non authentifié", { status: 401 });
+  if (!(await isPaidUser(session.user.id))) {
+    return new Response("La facturation électronique fait partie de la formule Pro", { status: 402 });
+  }
 
   const { id } = await params;
   const pdf = await buildFacturXPdf(id, session.user.id);

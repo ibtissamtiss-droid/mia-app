@@ -35,6 +35,11 @@ enum UrssafPeriod {
   QUARTERLY
 }
 
+enum Plan {
+  FREE
+  PAID
+}
+
 enum DocumentType {
   QUOTE
   INVOICE
@@ -77,6 +82,10 @@ model User {
   urssafDeclarationDay Int?
   bridgeUserUuid    String?
   bridgeLastSyncAt  DateTime?
+  plan                 Plan      @default(FREE)
+  stripeCustomerId     String?   @unique
+  stripeSubscriptionId String?   @unique
+  subscriptionStatus   String?
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 

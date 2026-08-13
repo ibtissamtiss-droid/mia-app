@@ -1,10 +1,14 @@
 import { auth } from "@/auth";
 import { prisma } from "@/lib/db";
 import { listAccounts, listTransactions } from "@/lib/bridge";
+import { isPaidUser } from "@/lib/plan";
 
 export async function POST() {
   const session = await auth();
   if (!session?.user) return new Response("Non authentifié", { status: 401 });
+  if (!(await isPaidUser(session.user.id))) {
+    return new Response("La synchronisation bancaire fait partie de la formule Pro", { status: 402 });
+  }
 
   const user = await prisma.user.findUnique({
     where: { id: session.user.id },

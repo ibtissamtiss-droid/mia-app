@@ -6,6 +6,7 @@ import { anthropic, CHAT_MODEL } from "@/lib/ai/client";
 import { checkRateLimit, rateLimitResponse } from "@/lib/rate-limit";
 import { buildUserContext } from "@/lib/ai/user-context";
 import { CHAT_TOOLS, executeChatTool } from "@/lib/ai/chat-tools";
+import { isPaidUser } from "@/lib/plan";
 
 const MAX_TOOL_ITERATIONS = 4;
 
@@ -28,6 +29,10 @@ type StreamBlock =
 export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const session = await auth();
   if (!session?.user) return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
+
+  if (!(await isPaidUser(session.user.id))) {
+    return NextResponse.json({ error: "L'Assistant IA fait partie de la formule Pro" }, { status: 402 });
+  }
 
   const { allowed } = await checkRateLimit(`chat:${session.user.id}`, 30, 60 * 60 * 1000);
   if (!allowed) return rateLimitResponse();

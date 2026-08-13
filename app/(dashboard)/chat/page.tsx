@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { ChatWindow } from "@/components/chat/chat-window";
 import { ConversationList } from "@/components/chat/conversation-list";
+import { PaidFeatureGate } from "@/components/billing/paid-feature-gate";
 import type { ChatConversation } from "@/types/models";
 
 export default function ChatPage() {
@@ -54,25 +55,27 @@ export default function ChatPage() {
   };
 
   return (
-    <div className="mx-auto max-w-5xl space-y-4">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Assistant IA</h1>
-        <p className="text-sm text-muted-foreground">
-          Discutez avec MIA pour organiser votre travail.
-        </p>
-      </div>
-      <div className="flex gap-4">
-        <ConversationList
-          conversations={conversations}
-          activeId={activeId}
-          onSelect={setActiveId}
-          onNew={handleNew}
-          onDelete={handleDelete}
-        />
-        <div className="flex-1">
-          {activeId && <ChatWindow key={activeId} conversationId={activeId} onMessageSent={refreshList} />}
+    <PaidFeatureGate feature="L'Assistant IA">
+      <div className="mx-auto max-w-5xl space-y-4">
+        <div>
+          <h1 className="text-2xl font-semibold tracking-tight">Assistant IA</h1>
+          <p className="text-sm text-muted-foreground">
+            Discutez avec MIA pour organiser votre travail.
+          </p>
+        </div>
+        <div className="flex gap-4">
+          <ConversationList
+            conversations={conversations}
+            activeId={activeId}
+            onSelect={setActiveId}
+            onNew={handleNew}
+            onDelete={handleDelete}
+          />
+          <div className="flex-1">
+            {activeId && <ChatWindow key={activeId} conversationId={activeId} onMessageSent={refreshList} />}
+          </div>
         </div>
       </div>
-    </div>
+    </PaidFeatureGate>
   );
 }

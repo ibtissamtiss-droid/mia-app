@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PageSpinner } from "@/components/ui/page-spinner";
 import { toast } from "sonner";
 import { Landmark, RefreshCw, Loader2, CheckCircle2 } from "lucide-react";
+import { PaidFeatureGate } from "@/components/billing/paid-feature-gate";
 
 type BankAccount = {
   id: string;
@@ -40,6 +41,14 @@ function formatEuro(value: number) {
 }
 
 export default function BanquePage() {
+  return (
+    <PaidFeatureGate feature="La synchronisation bancaire">
+      <BanqueContent />
+    </PaidFeatureGate>
+  );
+}
+
+function BanqueContent() {
   const [data, setData] = useState<AccountsResponse | null>(null);
   const [connecting, setConnecting] = useState(false);
   const [syncing, setSyncing] = useState(false);

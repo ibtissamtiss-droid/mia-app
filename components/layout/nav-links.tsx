@@ -19,6 +19,7 @@ import {
   Lightbulb,
   Calculator,
   Landmark,
+  Sparkles,
 } from "lucide-react";
 
 const NAV_ITEMS = [
@@ -64,7 +65,20 @@ export function NavLinks({ onNavigate }: { onNavigate?: () => void }) {
           );
         })}
       </nav>
-      <div className="border-t p-3">
+      <div className="space-y-1 border-t p-3">
+        <Link
+          href="/abonnement"
+          onClick={onNavigate}
+          className={cn(
+            "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
+            pathname.startsWith("/abonnement")
+              ? "bg-secondary text-secondary-foreground"
+              : "text-muted-foreground hover:bg-secondary/60 hover:text-foreground"
+          )}
+        >
+          <Sparkles className="h-4 w-4" />
+          Abonnement
+        </Link>
         <Link
           href="/settings"
           onClick={onNavigate}
